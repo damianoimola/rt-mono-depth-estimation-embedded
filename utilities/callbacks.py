@@ -1,3 +1,4 @@
+from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 def get_callbacks():
     cb_list = []
 

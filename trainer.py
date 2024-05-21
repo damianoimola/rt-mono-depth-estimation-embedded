@@ -15,15 +15,23 @@ class Trainer:
 
     def __init__(self, options):
         self.opt = options
+
+        # misc
         self.device = self.opt.device
         self.size = (self.opt.channels, self.opt.height, self.opt.width)
         self.experiment_name = f'{self.opt.model_name}-d={self.opt.dataset}-lr={self.opt.learning_rate}-e={self.opt.num_epochs}'
         self.loaded = False
+
+        # data
         self.train_dataloader, self.valid_dataloader, self.test_dataloader = (None, None, None)
+
+        # trainer settings
         self.logger = get_logger(self.experiment_name)
         self.version = self.logger.version
         self.cb_list = get_callbacks()
         self.trainer = L.Trainer(max_epochs=self.opt.num_epochs, log_every_n_steps=1, logger=self.logger, callbacks=self.cb_list, accelerator='auto')
+
+        # model loading
         self.plain_model = None
         self.lit_model = None
         self.select_model()

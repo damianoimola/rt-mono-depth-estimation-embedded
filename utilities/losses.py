@@ -14,9 +14,12 @@ class BerHuLoss(nn.Module):
 
     def forward(self, predicted_depth, ground_truth_depth):
         diff = torch.abs(predicted_depth - ground_truth_depth)
+        # computing c (0.2 = 1/5)
         c = 0.2 * torch.max(diff).item()
+        # getting l1 and l2 masks
         l2_mask = (diff > c).float()
         l1_mask = 1.0 - l2_mask
+        # computing l1 and l2 to relative pixels
         l1_loss = l1_mask * diff
         l2_loss = l2_mask * (diff ** 2 + c ** 2) / (2 * c)
         return torch.mean(l1_loss + l2_loss)
@@ -65,7 +68,6 @@ class EdgeAwareSmoothnessLoss(nn.Module):
         return gy
 
 class SiLogLoss(nn.Module):
-
     def __init__(self):
         super(SiLogLoss, self).__init__()
 
