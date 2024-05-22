@@ -1,8 +1,3 @@
-# Decompiled with PyLingual (https://pylingual.io)
-# Internal filename: D:\Python\univ_proj\computer_vision\computer_vision_project\model\unet\lightning_model.py
-# Bytecode version: 3.12.0rc2 (3531)
-# Source timestamp: 2024-05-21 20:44:36 UTC (1716324276)
-
 import lightning as L
 import torch.nn as nn
 import torch
@@ -22,7 +17,7 @@ class LitUNet(L.LightningModule):
         self.metrics = Metrics()
 
     def forward(self, inputs):
-        preds = self.model(rearrange(inputs, 'B H W C -> B C H W'))
+        preds = self.model(inputs.permute(0, 3, 1, 2))#self.model(rearrange(inputs, 'B H W C -> B C H W'))
         return preds
 
     def training_step(self, batch, batch_idx):

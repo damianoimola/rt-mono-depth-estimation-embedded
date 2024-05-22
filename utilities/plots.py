@@ -1,18 +1,20 @@
-# Decompiled with PyLingual (https://pylingual.io)
-# Internal filename: D:\Python\univ_proj\computer_vision\computer_vision_project\utilities\plots.py
-# Bytecode version: 3.12.0rc2 (3531)
-# Source timestamp: 2024-05-20 13:40:36 UTC (1716212436)
-
 import matplotlib.pyplot as plt
 import torch
 from einops import rearrange
 
-def plot_predictions(input, target, all_preds, save=False, title='output', batch_size=6):
+def plot_predictions(input, target, all_preds, save=False, title='output', batch_size=12):
     import matplotlib
     matplotlib.use('TkAgg')
-    num_preds = len(all_preds)
-    if len(all_preds.size()) < 4:
+
+
+    if len(all_preds.size()) < 3:
+        raise("There is a problem")
+    if len(all_preds.size()) == 3:
         all_preds = all_preds.unsqueeze(0)
+
+    # number of predictions for each sample in batch
+    num_preds = 1
+
     fig, axes = plt.subplots(batch_size, num_preds + 2, figsize=(13, 13))
     for i in range(batch_size):
         for j in range(num_preds + 2):
@@ -26,8 +28,10 @@ def plot_predictions(input, target, all_preds, save=False, title='output', batch
                 if i == 0:
                     ax.set_title('reference')
             else:
-                pred = all_preds[j]
-                pred = pred.detach()[i].cpu()
+                # pred = all_preds[j]
+                # pred = pred.detach()[i].cpu()
+                pred = all_preds[i]
+                pred = pred.detach().cpu()
                 pred = pred.permute((1, 2, 0))
                 if i == 0:
                     ax.set_title(f'shape {pred.numpy().shape}')
