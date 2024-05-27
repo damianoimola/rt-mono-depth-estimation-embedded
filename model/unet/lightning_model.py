@@ -17,20 +17,18 @@ class LitUNet(L.LightningModule):
         self.metrics = Metrics()
 
     def forward(self, inputs):
-        preds = self.model(inputs.permute(0, 3, 1, 2))#self.model(rearrange(inputs, 'B H W C -> B C H W'))
-        return preds
+        return self.model(inputs)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        pred = self.model(x.permute(0, 3, 1, 2))
+        pred = self.model(x)
         log_dict = {}
 
-        gt = y.permute((0, 3, 1, 2))
-        gt = self.transform(gt)
+        gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss = combined_loss(pred, gt)
         mse_loss = nn.MSELoss()(pred, gt)
-        loss = sum([eas_loss, mse_loss])
+        loss = sum([eas_loss, berhu_loss, silog_loss])
 
         log_dict['train_total_loss'] = loss.item()
         log_dict['train_mse_loss'] = mse_loss.item()
@@ -49,15 +47,14 @@ class LitUNet(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        pred = self.model(x.permute(0, 3, 1, 2))
+        pred = self.model(x)
         log_dict = {}
 
-        gt = y.permute((0, 3, 1, 2))
-        gt = self.transform(gt)
+        gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss = combined_loss(pred, gt)
         mse_loss = nn.MSELoss()(pred, gt)
-        loss = sum([eas_loss, mse_loss])
+        loss = sum([eas_loss, berhu_loss, silog_loss])
 
         log_dict['valid_total_loss'] = loss.item()
         log_dict['valid_mse_loss'] = mse_loss.item()
@@ -76,15 +73,14 @@ class LitUNet(L.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        pred = self.model(x.permute(0, 3, 1, 2))
-
+        pred = self.model(x)
         log_dict = {}
-        gt = y.permute((0, 3, 1, 2))
-        gt = self.transform(gt)
+
+        gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss = combined_loss(pred, gt)
         mse_loss = nn.MSELoss()(pred, gt)
-        loss = sum([eas_loss, mse_loss])
+        loss = sum([eas_loss, berhu_loss, silog_loss])
 
         log_dict['test_total_loss'] = loss.item()
         log_dict['test_mse_loss'] = mse_loss.item()

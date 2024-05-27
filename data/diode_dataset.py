@@ -1,3 +1,5 @@
+import random
+
 import cv2
 import numpy as np
 import torch
@@ -10,7 +12,6 @@ class DiodeDataset(Dataset):
         self.max_depth = options.max_depth
         self.min_depth = options.min_depth
         self.dim = (options.height, options.width)
-        self.debug = True
 
     def __getitem__(self, index):
         row = self.dataframe.iloc[index].to_numpy()
@@ -23,11 +24,13 @@ class DiodeDataset(Dataset):
         return len(self.dataframe)
 
     def load(self, image_path, depth_map, mask, eps=1e-06):
+        flip = random.random() > 0.5
+
         try:
             image = cv2.imread(image_path)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image = cv2.resize(image, self.dim)
-            image = self.transformation()(torch.tensor(image))
+            image = self.to_float32()(torch.tensor(image))
         except Exception as e:
             print(f'Error loading input image: {e}')
 
@@ -53,7 +56,7 @@ class DiodeDataset(Dataset):
             depth_map = np.clip(depth_map, self.min_depth, np.log(max_depth))
             depth_map = cv2.resize(depth_map, self.dim)
             depth_map = np.expand_dims(depth_map, axis=2)
-            depth_map = self.transformation()(torch.tensor(depth_map))
+            depth_map = self.to_float32()(torch.tensor(depth_map))
             depth_map = depth_map.clamp(min=eps)
             depth_map = (depth_map - torch.min(depth_map)) / (torch.max(depth_map) - torch.min(depth_map))
         except Exception as e:
@@ -61,5 +64,5 @@ class DiodeDataset(Dataset):
 
         return image, depth_map
 
-    def transformation(self):
+    def to_float32(self):
         return transforms.Compose([transforms.ConvertImageDtype(torch.float32)])

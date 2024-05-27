@@ -45,6 +45,7 @@ class Options:
                 "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\nyu\\nyu.mat",
                 "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\kitti",
                 "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\diode\\val",
+                "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\diode\\indoors",
             ])
 
         self.parser.add_argument(
@@ -82,7 +83,7 @@ class Options:
             '--max_depth',
             type=float,
             help='maximum depth',
-            default=200.0)
+            default=150.0)
 
 
         # MODEL
@@ -109,7 +110,7 @@ class Options:
             '--num_epochs',
             type=int,
             help='number of epochs',
-            default=1)
+            default=200)
 
     def parse(self):
         self.options = self.parser.parse_args()

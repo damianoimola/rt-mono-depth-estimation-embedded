@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class UNet(nn.Module):
-    def __init__(self, in_channels, out_channels, mode='add'):
+    def __init__(self, in_channels, out_channels, mode='concat'):
         super(UNet, self).__init__()
         self.mode = mode
         self.enc1 = self.conv_block(in_channels, 64)
