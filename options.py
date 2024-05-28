@@ -104,7 +104,7 @@ class Options:
             '--learning_rate',
             type=float,
             help='learning rate',
-            default=0.0001)
+            default=0.001)
 
         self.parser.add_argument(
             '--num_epochs',

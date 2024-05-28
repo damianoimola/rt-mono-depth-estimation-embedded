@@ -26,11 +26,11 @@ class LitUNet(L.LightningModule):
 
         gt = self.transform(y)
 
-        eas_loss, berhu_loss, silog_loss, sasinv_loss = combined_loss(pred, gt)
-        mse_loss = nn.MSELoss()(pred, gt)
-        loss = sum([eas_loss, berhu_loss, silog_loss])
+        eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
+        loss = sum([eas_loss, mse_loss, ssim_loss, sasinv_loss])
 
         log_dict['train_total_loss'] = loss.item()
+        log_dict['train_ssim_loss'] = ssim_loss.item()
         log_dict['train_mse_loss'] = mse_loss.item()
         log_dict['train_eas_loss'] = eas_loss.item()
         log_dict['train_berhu_loss'] = berhu_loss.item()
@@ -52,11 +52,11 @@ class LitUNet(L.LightningModule):
 
         gt = self.transform(y)
 
-        eas_loss, berhu_loss, silog_loss, sasinv_loss = combined_loss(pred, gt)
-        mse_loss = nn.MSELoss()(pred, gt)
-        loss = sum([eas_loss, berhu_loss, silog_loss])
+        eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
+        loss = sum([eas_loss, mse_loss, ssim_loss, sasinv_loss])
 
         log_dict['valid_total_loss'] = loss.item()
+        log_dict['valid_ssim_loss'] = ssim_loss.item()
         log_dict['valid_mse_loss'] = mse_loss.item()
         log_dict['valid_eas_loss'] = eas_loss.item()
         log_dict['valid_berhu_loss'] = berhu_loss.item()
@@ -78,11 +78,11 @@ class LitUNet(L.LightningModule):
 
         gt = self.transform(y)
 
-        eas_loss, berhu_loss, silog_loss, sasinv_loss = combined_loss(pred, gt)
-        mse_loss = nn.MSELoss()(pred, gt)
-        loss = sum([eas_loss, berhu_loss, silog_loss])
+        eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
+        loss = sum([eas_loss, mse_loss, ssim_loss, sasinv_loss])
 
         log_dict['test_total_loss'] = loss.item()
+        log_dict['test_ssim_loss'] = ssim_loss.item()
         log_dict['test_mse_loss'] = mse_loss.item()
         log_dict['test_eas_loss'] = eas_loss.item()
         log_dict['test_berhu_loss'] = berhu_loss.item()

@@ -12,5 +12,5 @@ if __name__ == "__main__":
 
     # trainer.plot_metrics("training_logs/unet-d=nyu_v2-lr=0.0001-e=200/version_2/metrics.csv")
 
-    # trainer.load("to_load3")
-    # trainer.plot_batch_predictions()
+    trainer.load("unet-d=nyu_v2-lr=0.0001-e=200")
+    trainer.plot_batch_predictions()

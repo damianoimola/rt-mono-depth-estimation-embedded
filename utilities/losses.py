@@ -1,14 +1,41 @@
-# Decompiled with PyLingual (https://pylingual.io)
-# Internal filename: D:\Python\univ_proj\computer_vision\computer_vision_project\utilities\losses.py
-# Bytecode version: 3.12.0rc2 (3531)
-# Source timestamp: 2024-05-20 20:13:10 UTC (1716235990)
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class BerHuLoss(nn.Module):
+class SSIMLoss(nn.Module):
+    def __init__(self):
+        super(SSIMLoss, self).__init__()
 
+    def forward(self, predicted_depth, ground_truth_depth, window_size=11, size_average=True):
+        C1 = 0.01 ** 2
+        C2 = 0.03 ** 2
+
+        mu_pred = F.avg_pool2d(predicted_depth, window_size, 1, 0)
+        mu_target = F.avg_pool2d(ground_truth_depth, window_size, 1, 0)
+
+        mu_pred_sq = mu_pred ** 2
+        mu_target_sq = mu_target ** 2
+        mu_pred_target = mu_pred * mu_target
+
+        sigma_pred_sq = F.avg_pool2d(predicted_depth * predicted_depth, window_size, 1, 0) - mu_pred_sq
+        sigma_target_sq = F.avg_pool2d(ground_truth_depth * ground_truth_depth, window_size, 1, 0) - mu_target_sq
+        sigma_pred_target = F.avg_pool2d(predicted_depth * ground_truth_depth, window_size, 1, 0) - mu_pred_target
+
+        # [-1, 1]
+        ssim_map = ((2 * mu_pred_target + C1) * (2 * sigma_pred_target + C2)) / (
+                    (mu_pred_sq + mu_target_sq + C1) * (sigma_pred_sq + sigma_target_sq + C2))
+
+        # [0, 2]
+        complementary_ssim_map = 1 - ssim_map
+
+        # [0, 1]
+        if size_average:
+            return torch.clamp(complementary_ssim_map/2, 0, 1).mean()
+        else:
+            return torch.clamp(complementary_ssim_map/2, 0, 1).mean([1, 2, 3])
+
+
+class BerHuLoss(nn.Module):
     def __init__(self):
         super(BerHuLoss, self).__init__()
 
@@ -25,7 +52,6 @@ class BerHuLoss(nn.Module):
         return torch.mean(l1_loss + l2_loss)
 
 class EdgeAwareSmoothnessLossWithSobel(nn.Module):
-
     def __init__(self):
         super(EdgeAwareSmoothnessLossWithSobel, self).__init__()
 
@@ -46,7 +72,6 @@ class EdgeAwareSmoothnessLossWithSobel(nn.Module):
         return (grad_x, grad_y)
 
 class EdgeAwareSmoothnessLoss(nn.Module):
-
     def __init__(self):
         super(EdgeAwareSmoothnessLoss, self).__init__()
 
@@ -79,7 +104,6 @@ class SiLogLoss(nn.Module):
         return torch.sqrt(loss + eps)
 
 class SASInvLoss(nn.Module):
-
     def __init__(self):
         super(SASInvLoss, self).__init__()
 
@@ -94,4 +118,6 @@ def combined_loss(predicted_depth, ground_truth_depth):
     berhu_loss = BerHuLoss()(predicted_depth, ground_truth_depth)
     silog_loss = SiLogLoss()(predicted_depth, ground_truth_depth)
     sasinv_loss = SASInvLoss()(predicted_depth, ground_truth_depth)
-    return (eas_loss, berhu_loss, silog_loss, sasinv_loss)
+    ssim_loss = SSIMLoss()(predicted_depth, ground_truth_depth)
+    mse_loss = nn.MSELoss()(predicted_depth, ground_truth_depth)
+    return (eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss)

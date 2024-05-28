@@ -25,10 +25,12 @@ class Trainer:
         self.train_dataloader, self.valid_dataloader, self.test_dataloader = (None, None, None)
 
         # trainer settings
+        self.checkpoint_path = None
         self.logger = get_logger(self.experiment_name)
         self.version = self.logger.version
         self.cb_list = get_callbacks()
-        self.trainer = L.Trainer(max_epochs=self.opt.num_epochs, log_every_n_steps=1, logger=self.logger, callbacks=self.cb_list, accelerator='auto')
+        self.trainer = self.trainer = L.Trainer(max_epochs=self.opt.num_epochs, log_every_n_steps=1, logger=self.logger,
+                                                callbacks=self.cb_list, accelerator='auto')
 
         # model loading
         self.plain_model = None
@@ -51,7 +53,13 @@ class Trainer:
 
     def train(self):
         self.train_dataloader, self.valid_dataloader, self.test_dataloader = self.get_data()
-        self.trainer.fit(model=self.lit_model, train_dataloaders=self.train_dataloader, val_dataloaders=self.valid_dataloader)
+
+        if self.checkpoint_path:
+            self.trainer.fit(model=self.lit_model, ckpt_path=self.checkpoint_path,
+                             train_dataloaders=self.train_dataloader, val_dataloaders=self.valid_dataloader)
+        else:
+            self.trainer.fit(model=self.lit_model, train_dataloaders=self.train_dataloader, val_dataloaders=self.valid_dataloader)
+
         self.loaded = True
 
     def eval(self):
@@ -61,10 +69,12 @@ class Trainer:
         self.trainer.save_checkpoint(f'{self.opt.checkpoint_dir}/{self.experiment_name}.ckpt')
 
     def load(self, checkpoint_name):
+        self.checkpoint_path = f'{self.opt.checkpoint_dir}/{checkpoint_name}.ckpt'
+
         _, lit_class = self.select_model()
 
         self.lit_model = lit_class.load_from_checkpoint(
-            checkpoint_path=f'{self.opt.checkpoint_dir}/{checkpoint_name}.ckpt',
+            checkpoint_path=self.checkpoint_path,
             plain_model=self.plain_model,
             size=self.opt.width,
             lr=self.opt.learning_rate

@@ -21,6 +21,8 @@ class UNet(nn.Module):
             self.dec2 = self.upconv_block(128, 64)
             self.dec1 = self.upconv_block(64, out_channels)
 
+        self.sigmoid = nn.Sigmoid()
+
     def conv_block(self, in_channels, out_channels):
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1),
@@ -55,4 +57,4 @@ class UNet(nn.Module):
             d2 = self.dec2(d3)
             d2 = torch.add(d2, e1)
             d1 = self.dec1(d2)
-        return d1
+        return self.sigmoid(d1)
