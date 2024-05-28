@@ -27,7 +27,7 @@ class LitUNet(L.LightningModule):
         gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
-        loss = sum([eas_loss, mse_loss, ssim_loss, sasinv_loss])
+        loss = sum([eas_loss, berhu_loss, ssim_loss, sasinv_loss])
 
         log_dict['train_total_loss'] = loss.item()
         log_dict['train_ssim_loss'] = ssim_loss.item()
@@ -53,7 +53,7 @@ class LitUNet(L.LightningModule):
         gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
-        loss = sum([eas_loss, mse_loss, ssim_loss, sasinv_loss])
+        loss = sum([eas_loss, berhu_loss, ssim_loss, sasinv_loss])
 
         log_dict['valid_total_loss'] = loss.item()
         log_dict['valid_ssim_loss'] = ssim_loss.item()
@@ -79,7 +79,7 @@ class LitUNet(L.LightningModule):
         gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
-        loss = sum([eas_loss, mse_loss, ssim_loss, sasinv_loss])
+        loss = sum([eas_loss, berhu_loss, ssim_loss, sasinv_loss])
 
         log_dict['test_total_loss'] = loss.item()
         log_dict['test_ssim_loss'] = ssim_loss.item()

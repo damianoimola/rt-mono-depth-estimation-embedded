@@ -170,7 +170,7 @@ class Trainer:
         ax.plot(results['valid_rmse'].dropna(ignore_index=True), color='darkgreen', label='(RMSE) root mean squared error validation', alpha=0.7)
         ax.plot(results['valid_log_rmse'].dropna(ignore_index=True), color='forestgreen', label='(RMSElog) root mean squared log error validation', alpha=0.7)
         # ax.set_ylim(0, 2)
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox=True, shadow=True, ncol=4)
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), fancybox=True, shadow=True, ncol=2)
         ax.grid()
 
         fig.tight_layout(pad=2.0)

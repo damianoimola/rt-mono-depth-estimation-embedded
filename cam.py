@@ -12,7 +12,7 @@ opts = options.parse()
 
 matplotlib.use('TkAgg')
 
-model = "unet-d=nyu_v2-lr=0.0001-e=200"
+model = "unet-d=nyu_v2-lr=0.001-e=200"
 
 def show(img):
     plt.imshow(img) # , cmap="plasma"
