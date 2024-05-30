@@ -110,7 +110,7 @@ class Options:
             '--num_epochs',
             type=int,
             help='number of epochs',
-            default=200)
+            default=100)
 
     def parse(self):
         self.options = self.parser.parse_args()

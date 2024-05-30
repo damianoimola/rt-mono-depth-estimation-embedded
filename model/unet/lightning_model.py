@@ -27,7 +27,7 @@ class LitUNet(L.LightningModule):
         gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
-        loss = sum([eas_loss, berhu_loss, ssim_loss, sasinv_loss])
+        loss = sum([eas_loss, berhu_loss, ssim_loss, silog_loss])
 
         log_dict['train_total_loss'] = loss.item()
         log_dict['train_ssim_loss'] = ssim_loss.item()
@@ -53,7 +53,7 @@ class LitUNet(L.LightningModule):
         gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
-        loss = sum([eas_loss, berhu_loss, ssim_loss, sasinv_loss])
+        loss = sum([eas_loss, berhu_loss, ssim_loss, silog_loss])
 
         log_dict['valid_total_loss'] = loss.item()
         log_dict['valid_ssim_loss'] = ssim_loss.item()
@@ -79,7 +79,7 @@ class LitUNet(L.LightningModule):
         gt = self.transform(y)
 
         eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss = combined_loss(pred, gt)
-        loss = sum([eas_loss, berhu_loss, ssim_loss, sasinv_loss])
+        loss = sum([eas_loss, berhu_loss, ssim_loss, silog_loss])
 
         log_dict['test_total_loss'] = loss.item()
         log_dict['test_ssim_loss'] = ssim_loss.item()
@@ -99,7 +99,8 @@ class LitUNet(L.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.lr)
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
+        # return optimizer
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.90)
         return ([optimizer], [{'scheduler': scheduler, 'interval': 'epoch'}])
 
     def lr_scheduler_step(self, scheduler, metric):

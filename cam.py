@@ -15,7 +15,7 @@ matplotlib.use('TkAgg')
 model = "unet-d=nyu_v2-lr=0.001-e=200"
 
 def show(img):
-    plt.imshow(img) # , cmap="plasma"
+    plt.imshow(img, cmap="plasma") # , cmap="plasma"
     plt.show()
 
 def predict_depth(trainer, frame):
@@ -27,9 +27,12 @@ def predict_depth(trainer, frame):
 
     depth_map = depth_map.detach()[0].cpu()
     depth_map = depth_map.permute(1, 2, 0).numpy()
+    show(depth_map)
     # depth_map = depth_map.astype(np.uint8)
     depth_map = (depth_map * 255.0)
+    show(depth_map)
     depth_map = depth_map.astype(np.uint8)
+    show(depth_map)
     # depth_map = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_L1).astype(np.uint8)
 
     return depth_map

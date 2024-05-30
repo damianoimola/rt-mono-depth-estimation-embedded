@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class UNet(nn.Module):
-    def __init__(self, in_channels, out_channels, mode='concat'):
+    def __init__(self, in_channels, out_channels, mode='sum'):
         super(UNet, self).__init__()
         self.mode = mode
         self.enc1 = self.conv_block(in_channels, 64)
@@ -57,4 +57,5 @@ class UNet(nn.Module):
             d2 = self.dec2(d3)
             d2 = torch.add(d2, e1)
             d1 = self.dec1(d2)
+
         return self.sigmoid(d1)
