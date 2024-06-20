@@ -1,5 +1,5 @@
 from trainer import Trainer
-from computer_vision_project.options import Options
+from options import Options
 
 
 

@@ -1,12 +1,7 @@
-# Decompiled with PyLingual (https://pylingual.io)
-# Internal filename: D:\Python\univ_proj\computer_vision\computer_vision_project\model\monodepth_rt\monodepthrt.py
-# Bytecode version: 3.12.0rc2 (3531)
-# Source timestamp: 2024-05-15 20:12:21 UTC (1715803941)
-
 import numpy as np
 import torch.nn as nn
-from computer_vision_project.model.monodepth_rt.depth_decoder import DepthDecoder
-from computer_vision_project.model.monodepth_rt.pyramidal_encoder import PyramidEncoder
+from model.monodepth_rt.depth_decoder import DepthDecoder
+from model.monodepth_rt.pyramidal_encoder import PyramidEncoder
 
 class MonoDepthRT(nn.Module):
 

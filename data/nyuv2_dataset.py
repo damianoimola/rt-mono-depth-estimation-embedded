@@ -7,11 +7,9 @@ from einops import rearrange
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 import torchvision.transforms.functional as TF
-from computer_vision_project.data.augmentation import augment_data
+from data.augmentation import augment_data
 
 
-# def to_float32():
-#     return transforms.Compose([transforms.ConvertImageDtype(torch.float32)])
 
 class NYUV2Dataset(Dataset):
 

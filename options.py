@@ -42,8 +42,12 @@ class Options:
             help='path to the training data',
             default="D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\nyu\\nyu.mat",
             choices=[
+                # nyu_v2
                 "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\nyu\\nyu.mat",
+                "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\nyu\\nyu_data",
+                # diode
                 "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\kitti",
+                # diode
                 "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\diode\\val",
                 "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\diode\\indoors",
             ])
@@ -53,7 +57,7 @@ class Options:
             type=str,
             help='dataset to train on',
             default='nyu_v2',
-            choices=['kitti_depth', 'nyu_v2', 'diode_val'])
+            choices=['kitti_depth', 'nyu_v2', 'diode_val', 'nyu_v2_folder'])
 
         self.parser.add_argument(
             '--height',
@@ -104,13 +108,13 @@ class Options:
             '--learning_rate',
             type=float,
             help='learning rate',
-            default=0.001)
+            default=0.0003)
 
         self.parser.add_argument(
             '--num_epochs',
             type=int,
             help='number of epochs',
-            default=100)
+            default=200)
 
     def parse(self):
         self.options = self.parser.parse_args()

@@ -4,7 +4,7 @@ from torch import optim
 from torchvision import transforms
 import lightning as L
 from einops import rearrange
-from computer_vision_project.utilities.metrics import Metrics
+from utilities.metrics import Metrics
 
 class LitMonoDERT(L.LightningModule):
 

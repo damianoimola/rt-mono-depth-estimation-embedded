@@ -2,8 +2,10 @@ import os
 import h5py
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from computer_vision_project.data.diode_dataset import DiodeDataset
-from computer_vision_project.data.nyuv2_dataset import NYUV2Dataset
+from data.diode_dataset import DiodeDataset
+from data.nyuv2_dataset import NYUV2Dataset
+from data.nyuv2_folder_dataset import NYUV2DatasetFolder
+
 
 class DatasetHandler:
 
@@ -30,6 +32,28 @@ class DatasetHandler:
         train_data = NYUV2Dataset(dataframe=train_df, options=self.opt)
         valid_data = NYUV2Dataset(dataframe=valid_df, options=self.opt)
         test_data = NYUV2Dataset(dataframe=test_df, options=self.opt)
+
+        return (train_data, valid_data, test_data)
+
+    def load_nyu_v2_folders(self):
+        # loading paths
+        train_files = pd.read_csv(self.path+"\\data\\nyu2_train.csv")
+        test_files = pd.read_csv(self.path+"\\data\\nyu2_test.csv")
+
+        train_path_df = pd.DataFrame(train_files)
+        train_path, valid_path = train_test_split(train_path_df, test_size=0.1, shuffle=True)
+
+        test_path = pd.DataFrame(test_files)
+
+        print(f'train dataset samples {len(train_path)}')
+        print(f'valid dataset samples {len(valid_path)}')
+        print(f'test dataset samples {len(test_path)}')
+
+        print(test_path.head())
+
+        train_data = NYUV2DatasetFolder(dataframe=train_path, options=self.opt, base_path=self.path)
+        valid_data = NYUV2DatasetFolder(dataframe=valid_path, options=self.opt, base_path=self.path)
+        test_data = NYUV2DatasetFolder(dataframe=test_path, options=self.opt, base_path=self.path)
 
         return (train_data, valid_data, test_data)
 

@@ -2,10 +2,10 @@ import lightning as L
 import pandas as pd
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
-from computer_vision_project.data.dataset_handler import DatasetHandler
-from computer_vision_project.model.unet.lightning_model import LitUNet
-from computer_vision_project.model.unet.net import UNet
-from computer_vision_project.utilities.plots import plot_predictions
+from data.dataset_handler import DatasetHandler
+from model.unet.lightning_model import LitUNet
+from model.unet.net import UNet
+from utilities.plots import plot_predictions
 from model.monodepth_rt.lightning_model import LitMonoDERT
 from model.monodepth_rt.monodepthrt import MonoDepthRT
 from utilities.callbacks import get_callbacks
@@ -203,10 +203,12 @@ class Trainer:
             train_data, valid_data, test_data = h.load_nyu_v2()
         elif self.opt.dataset == 'diode_val':
             train_data, valid_data, test_data = h.load_diode()
+        elif self.opt.dataset == 'nyu_v2_folder':
+            train_data, valid_data, test_data = h.load_nyu_v2_folders()
         else:
             train_data, valid_data, test_data = (None, None, None)
 
-        train_dataloader = DataLoader(train_data, batch_size=self.opt.batch_size, shuffle=True, num_workers=0)
+        train_dataloader = DataLoader(train_data, batch_size=self.opt.batch_size, shuffle=True, num_workers=0) #self.opt.num_workers
         valid_dataloader = DataLoader(valid_data, batch_size=self.opt.batch_size, shuffle=False, num_workers=0)
         test_dataloader = DataLoader(test_data, batch_size=self.opt.batch_size, shuffle=True, num_workers=0)
 

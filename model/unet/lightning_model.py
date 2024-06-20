@@ -4,8 +4,8 @@ import torch
 from einops import rearrange
 from torch import optim
 from torchvision.transforms import transforms
-from computer_vision_project.utilities.losses import combined_loss
-from computer_vision_project.utilities.metrics import Metrics
+from utilities.losses import combined_loss
+from utilities.metrics import Metrics
 
 class LitUNet(L.LightningModule):
 
@@ -15,6 +15,7 @@ class LitUNet(L.LightningModule):
         self.transform = transforms.Resize(size=(size, size))
         self.lr = lr
         self.metrics = Metrics()
+        self.with_scheduler = True
 
     def forward(self, inputs):
         return self.model(inputs)
@@ -99,9 +100,12 @@ class LitUNet(L.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.lr)
-        # return optimizer
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.90)
-        return ([optimizer], [{'scheduler': scheduler, 'interval': 'epoch'}])
+        if self.with_scheduler:
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.95)
+            return ([optimizer], [{'scheduler': scheduler, 'interval': 'epoch'}])
+        else:
+            return optimizer
 
     def lr_scheduler_step(self, scheduler, metric):
-        scheduler.step(metric)
+        if self.with_scheduler:
+            scheduler.step(metric)
