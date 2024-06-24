@@ -113,11 +113,47 @@ class SASInvLoss(nn.Module):
         adjusted_pred = alpha * predicted_depth + beta
         return torch.mean((adjusted_pred - ground_truth_depth) ** 2)
 
+
+class GradientDomainLoss(nn.Module):
+    def __init__(self):
+        super(GradientDomainLoss, self).__init__()
+        self.loss_fn = nn.MSELoss()
+
+    def forward(self, pred, target):
+        pred_dx, pred_dy = self.compute_gradient(pred)
+        target_dx, target_dy = self.compute_gradient(target)
+
+        loss_x = self.loss_fn(pred_dx, target_dx)
+        loss_y = self.loss_fn(pred_dy, target_dy)
+
+        return loss_x + loss_y
+
+    def compute_gradient(self, x):
+        dx = x[:, :, 1:, :] - x[:, :, :-1, :]
+        dy = x[:, :, :, 1:] - x[:, :, :, :-1]
+        return dx, dy
+
+
+class TVLoss(nn.Module):
+    # Total Variation Loss: penalizes large gradients, letting the prediction be smoother
+    def __init__(self, weight=1.0):
+        super(TVLoss, self).__init__()
+        self.weight = weight
+
+    def forward(self, x):
+        batch_size, _, h, w = x.size()
+        tv_h = torch.pow(x[:, :, 1:, :] - x[:, :, :-1, :], 2).sum()
+        tv_w = torch.pow(x[:, :, :, 1:] - x[:, :, :, :-1], 2).sum()
+        return self.weight * (tv_h + tv_w) / (batch_size * h * w)
+
+
 def combined_loss(predicted_depth, ground_truth_depth):
     eas_loss = EdgeAwareSmoothnessLoss()(predicted_depth, ground_truth_depth)
     berhu_loss = BerHuLoss()(predicted_depth, ground_truth_depth)
     silog_loss = SiLogLoss()(predicted_depth, ground_truth_depth)
     sasinv_loss = SASInvLoss()(predicted_depth, ground_truth_depth)
     ssim_loss = SSIMLoss()(predicted_depth, ground_truth_depth)
+    tv_loss = TVLoss()(predicted_depth)
+    gd_loss = GradientDomainLoss()(predicted_depth, ground_truth_depth)
     mse_loss = nn.MSELoss()(predicted_depth, ground_truth_depth)
-    return (eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, mse_loss)
+    return (eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss)

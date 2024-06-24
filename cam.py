@@ -12,7 +12,7 @@ opts = options.parse()
 
 matplotlib.use('TkAgg')
 
-model = "unet-d=nyu_v2-lr=0.0003-e=200"
+model = "28e_kaggle"
 
 def show(img):
     plt.imshow(img, cmap="plasma") # , cmap="plasma"

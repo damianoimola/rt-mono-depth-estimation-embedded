@@ -40,7 +40,7 @@ class Options:
             '--data_path',
             type=str,
             help='path to the training data',
-            default="D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\nyu\\nyu.mat",
+            default="D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\nyu\\nyu_data",
             choices=[
                 # nyu_v2
                 "D:\\Python\\univ_proj\\computer_vision\\computer_vision_notebook\\nyu\\nyu.mat",
@@ -56,7 +56,7 @@ class Options:
             '--dataset',
             type=str,
             help='dataset to train on',
-            default='nyu_v2',
+            default='nyu_v2_folder',
             choices=['kitti_depth', 'nyu_v2', 'diode_val', 'nyu_v2_folder'])
 
         self.parser.add_argument(

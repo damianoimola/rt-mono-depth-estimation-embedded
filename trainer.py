@@ -7,7 +7,7 @@ from model.unet.lightning_model import LitUNet
 from model.unet.net import UNet
 from utilities.plots import plot_predictions
 from model.monodepth_rt.lightning_model import LitMonoDERT
-from model.monodepth_rt.monodepthrt import MonoDepthRT
+from model.monodepth_rt.old.monodepthrt import MonoDepthRT
 from utilities.callbacks import get_callbacks
 from utilities.logger import get_logger
 

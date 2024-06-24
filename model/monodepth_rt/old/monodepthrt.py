@@ -1,7 +1,7 @@
 import numpy as np
 import torch.nn as nn
-from model.monodepth_rt.depth_decoder import DepthDecoder
-from model.monodepth_rt.pyramidal_encoder import PyramidEncoder
+from model.monodepth_rt.old.depth_decoder import DepthDecoder
+from model.monodepth_rt.old.pyramidal_encoder import PyramidEncoder
 
 class MonoDepthRT(nn.Module):
 

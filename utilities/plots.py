@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 from einops import rearrange
 
+
 def plot_predictions(input, target, all_preds, save=False, title='output', batch_size=4):
     import matplotlib
     matplotlib.use('TkAgg')
