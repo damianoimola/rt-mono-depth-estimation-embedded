@@ -49,8 +49,6 @@ class DatasetHandler:
         print(f'valid dataset samples {len(valid_path)}')
         print(f'test dataset samples {len(test_path)}')
 
-        print(test_path.head())
-
         train_data = NYUV2DatasetFolder(dataframe=train_path, options=self.opt, base_path=self.path)
         valid_data = NYUV2DatasetFolder(dataframe=valid_path, options=self.opt, base_path=self.path)
         test_data = NYUV2DatasetFolder(dataframe=test_path, options=self.opt, base_path=self.path)

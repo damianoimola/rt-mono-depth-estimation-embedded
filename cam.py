@@ -12,7 +12,7 @@ opts = options.parse()
 
 matplotlib.use('TkAgg')
 
-model = "28e_kaggle"
+model = "37e_kaggle"
 
 def show(img):
     plt.imshow(img, cmap="plasma") # , cmap="plasma"
@@ -66,7 +66,7 @@ def start_capture(trainer, height, width):
         # Display the resulting frame
         cv2.imshow('Depth Map', depth_map_colored)
 
-        print("FPS: ", 1.0 / (time.time() - start_time))
+        print("FPS: ", 1.0 / (time.time() - start_time + 1e-6))
 
         # Press Q on keyboard to exit
         if cv2.waitKey(1) & 0xFF == ord('q'): break

@@ -6,8 +6,8 @@ from data.dataset_handler import DatasetHandler
 from model.unet.lightning_model import LitUNet
 from model.unet.net import UNet
 from utilities.plots import plot_predictions
-from model.monodepth_rt.lightning_model import LitMonoDERT
-from model.monodepth_rt.old.monodepthrt import MonoDepthRT
+from model.monodepth_rt.lightning_model import LitMonoDepthRT
+from model.monodepth_rt.net import MonoDepthRT
 from utilities.callbacks import get_callbacks
 from utilities.logger import get_logger
 
@@ -45,8 +45,8 @@ class Trainer:
 
         elif self.opt.model_name == 'monodepthrt':
             self.plain_model = MonoDepthRT(self.size, base_channels=64, network_depth=4, training=True)
-            self.lit_model = LitMonoDERT(self.plain_model.to(self.device), self.opt.height, self.opt.learning_rate)
-            return MonoDepthRT, LitMonoDERT
+            self.lit_model = LitMonoDepthRT(self.plain_model.to(self.device), self.opt.height, self.opt.learning_rate)
+            return MonoDepthRT, LitMonoDepthRT
 
         elif self.opt.model_name == 'monodert':
             return None, None
