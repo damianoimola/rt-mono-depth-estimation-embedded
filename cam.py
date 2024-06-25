@@ -12,7 +12,7 @@ opts = options.parse()
 
 matplotlib.use('TkAgg')
 
-model = "37e_kaggle"
+model = "28e_kaggle"
 
 def show(img):
     plt.imshow(img, cmap="plasma") # , cmap="plasma"
@@ -43,7 +43,7 @@ def start_capture(trainer, height, width):
     cap = cv2.VideoCapture(0)
 
     # Define the codec and create VideoWriter object
-    out = cv2.VideoWriter('video/output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 30, (width, height))
+    out = cv2.VideoWriter(f'video/{model}_output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 60, (width, height))
 
     while (cap.isOpened()):
         ret, frame = cap.read()
