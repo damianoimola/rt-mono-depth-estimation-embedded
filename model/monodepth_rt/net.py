@@ -3,9 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MonoDepthRT(nn.Module):
-    def __init__(self, in_channels, out_channels, mode='sum'):
+    def __init__(self, in_channels, out_channels, multi_output, with_comb_output=False, mode='sum'):
         super(MonoDepthRT, self).__init__()
         self.mode = mode
+        self.mo = multi_output
+        self.comb = with_comb_output
 
         self.enc1 = self.conv_block(in_channels, 64)
         self.enc2 = self.conv_block(64, 128)
@@ -14,20 +16,20 @@ class MonoDepthRT(nn.Module):
 
         if mode == 'concat':
             self.dec4 = self.upconv_block(512, 256)
-            if self.training: self.pred4 = self.prediction_decoder(512, out_channels)
+            self.pred4 = self.prediction_decoder(512, out_channels)
             self.dec3 = self.upconv_block(512, 128)
-            if self.training: self.pred3 = self.prediction_decoder(256, out_channels)
+            self.pred3 = self.prediction_decoder(256, out_channels)
             self.dec2 = self.upconv_block(256, 64)
-            if self.training: self.pred2 = self.prediction_decoder(128, out_channels)
+            self.pred2 = self.prediction_decoder(128, out_channels)
             self.dec1 = self.upconv_block(128, 32)
             self.pred1 = self.prediction_decoder(32, out_channels)
         else:
             self.dec4 = self.upconv_block(512, 256)
-            if self.training: self.pred4 = self.prediction_decoder(256, out_channels)
+            self.pred4 = self.prediction_decoder(256, out_channels)
             self.dec3 = self.upconv_block(256, 128)
-            if self.training: self.pred3 = self.prediction_decoder(128, out_channels)
+            self.pred3 = self.prediction_decoder(128, out_channels)
             self.dec2 = self.upconv_block(128, 64)
-            if self.training: self.pred2 = self.prediction_decoder(64, out_channels)
+            self.pred2 = self.prediction_decoder(64, out_channels)
             self.dec1 = self.upconv_block(64, 32)
             self.pred1 = self.prediction_decoder(32, out_channels)
 
@@ -65,7 +67,6 @@ class MonoDepthRT(nn.Module):
             d2 = self.dec2(d3)
             d2 = torch.cat((d2, e1), dim=1)
             d1 = self.dec1(d2)
-
         else:
             d4 = self.dec4(e4)
             d4 = torch.add(d4, e3)
@@ -75,19 +76,21 @@ class MonoDepthRT(nn.Module):
             d2 = torch.add(d2, e1)
             d1 = self.dec1(d2)
 
-        # if training phase, latents outputs
-        if self.training:
+        # if multi outputs, latents outputs
+        if self.mo:
             p1 = self.pred1(d1)
             p2 = self.pred2(d2)
             p3 = self.pred3(d3)
             p4 = self.pred4(d4)
 
-            comb = p1
-            comb += F.interpolate(p2, scale_factor=2, mode='bicubic', align_corners=False)
-            comb += F.interpolate(p3, scale_factor=4, mode='bicubic', align_corners=False)
-            comb += F.interpolate(p4, scale_factor=8, mode='bicubic', align_corners=False)
-            comb /= 3
-
-            return [p1, p2, p3, p4, comb]
+            if self.comb:
+                comb = p1
+                comb = comb + F.interpolate(p2, scale_factor=2, mode='bicubic', align_corners=False, antialias=False)
+                comb = comb + F.interpolate(p3, scale_factor=4, mode='bicubic', align_corners=False, antialias=False)
+                comb = comb + F.interpolate(p4, scale_factor=8, mode='bicubic', align_corners=False, antialias=False)
+                comb = comb/3
+                return [p1, p2, p3, p4, comb]
+            else:
+                return [p1, p2, p3, p4]
         else:
             return self.pred1(d1)

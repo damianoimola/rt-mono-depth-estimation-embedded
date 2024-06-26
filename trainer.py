@@ -44,7 +44,7 @@ class Trainer:
             return UNet, LitUNet
 
         elif self.opt.model_name == 'monodepthrt':
-            self.plain_model = MonoDepthRT(self.size, base_channels=64, network_depth=4, training=True)
+            self.plain_model = MonoDepthRT(3, 1, False)
             self.lit_model = LitMonoDepthRT(self.plain_model.to(self.device), self.opt.height, self.opt.learning_rate)
             return MonoDepthRT, LitMonoDepthRT
 

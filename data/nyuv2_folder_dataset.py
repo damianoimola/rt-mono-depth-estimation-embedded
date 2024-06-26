@@ -9,8 +9,6 @@ from torchvision.transforms import transforms
 class NYUV2DatasetFolder(Dataset):
     def __init__(self, dataframe, options, base_path):
         self.dataframe = dataframe
-        self.max_depth = options.max_depth
-        self.min_depth = options.min_depth
         self.dim = (options.height, options.width)
         self.base_path = base_path
 

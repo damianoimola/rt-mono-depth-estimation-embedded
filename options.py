@@ -95,7 +95,7 @@ class Options:
             '--model_name',
             type=str,
             help='name of the model to be used',
-            default='unet',
+            default='monodepthrt',
             choices=['unet', 'monodepthrt', 'monodert'])
 
         self.parser.add_argument(

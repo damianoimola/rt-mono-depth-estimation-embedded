@@ -4,15 +4,16 @@ import torch
 from einops import rearrange
 from torch import optim
 from torchvision.transforms import transforms
-from utilities.losses import combined_loss
+from utilities.losses import combined_loss, LossManager
 from utilities.metrics import Metrics
 import torch.nn.functional as F
 
-class LitMonoDepthRT(L.LightningModule):
+
+class OLDLitMonoDepthRT(L.LightningModule):
     def __init__(self, plain_model, size, lr):
-        super(LitMonoDepthRT, self).__init__()
+        super(OLDLitMonoDepthRT, self).__init__()
         self.model = plain_model
-        self.resize = transforms.Resize(size=(size, size))
+        self.resize = transforms.Resize(size=(size, size), antialias=False)
         self.lr = lr
         self.metrics = Metrics()
         self.with_scheduler = True
@@ -22,7 +23,8 @@ class LitMonoDepthRT(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        p1, p2, p3, p4, _ = self.model(x)
+        preds = self.model(x)
+        p1, p2, p3, p4 = preds[0], preds[1], preds[2], preds[3]
         log_dict = {}
 
         gt = self.resize(y)
@@ -47,18 +49,19 @@ class LitMonoDepthRT(L.LightningModule):
 
         self.log_dict(log_dict, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-
-        total_loss = loss
         for i, pred in enumerate([p2, p3, p4]):
-            ground = F.interpolate(gt, scale_factor=1/(2**(i + 1)), mode='bicubic', align_corners=False)
-            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred, ground)
-            total_loss += sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False,
+                                   antialias=False)
+            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred,
+                                                                                                                 ground)
+            loss = loss + sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
 
-        return total_loss
+        return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        p1, p2, p3, p4, _ = self.model(x)
+        preds = self.model(x)
+        p1, p2, p3, p4 = preds[0], preds[1], preds[2], preds[3]
         log_dict = {}
 
         gt = self.resize(y)
@@ -83,17 +86,19 @@ class LitMonoDepthRT(L.LightningModule):
 
         self.log_dict(log_dict, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-        total_loss = loss
         for i, pred in enumerate([p2, p3, p4]):
-            ground = F.interpolate(gt, scale_factor=1/(2**(i + 1)), mode='bicubic', align_corners=False)
-            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred, ground)
-            total_loss += sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False,
+                                   antialias=False)
+            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred,
+                                                                                                                 ground)
+            loss = loss + sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
 
-        return total_loss
+        return loss
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        p1, p2, p3, p4, _ = self.model(x)
+        preds = self.model(x)
+        p1, p2, p3, p4 = preds[0], preds[1], preds[2], preds[3]
         log_dict = {}
 
         gt = self.resize(y)
@@ -118,13 +123,14 @@ class LitMonoDepthRT(L.LightningModule):
 
         self.log_dict(log_dict, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-        total_loss = loss
         for i, pred in enumerate([p2, p3, p4]):
-            ground = F.interpolate(gt, scale_factor=1/(2**(i + 1)), mode='bicubic', align_corners=False)
-            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred, ground)
-            total_loss += sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False,
+                                   antialias=False)
+            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred,
+                                                                                                                 ground)
+            loss = loss + sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
 
-        return total_loss
+        return loss
 
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.lr)

@@ -12,7 +12,8 @@ opts = options.parse()
 
 matplotlib.use('TkAgg')
 
-model = "28e_kaggle"
+# model = "28e_kaggle"
+model = "mdrt10e_kaggle"
 
 def show(img):
     plt.imshow(img, cmap="plasma") # , cmap="plasma"
@@ -21,7 +22,7 @@ def show(img):
 def predict_depth(trainer, frame):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame = torch.tensor(frame, dtype=torch.float32).unsqueeze(0)
-    frame = frame.permute((0, 3, 1, 2))
+    frame = frame.permute((0, 3, 1, 2))/255.0
 
     depth_map = trainer.predict(frame)
 

@@ -34,7 +34,6 @@ class SSIMLoss(nn.Module):
         else:
             return torch.clamp(complementary_ssim_map/2, 0, 1).mean([1, 2, 3])
 
-
 class BerHuLoss(nn.Module):
     def __init__(self):
         super(BerHuLoss, self).__init__()
@@ -113,26 +112,30 @@ class SASInvLoss(nn.Module):
         adjusted_pred = alpha * predicted_depth + beta
         return torch.mean((adjusted_pred - ground_truth_depth) ** 2)
 
-
-class GradientDomainLoss(nn.Module):
+class HingeLoss(nn.Module):
     def __init__(self):
-        super(GradientDomainLoss, self).__init__()
-        self.loss_fn = nn.MSELoss()
+        super(HingeLoss, self).__init__()
 
     def forward(self, pred, target):
-        pred_dx, pred_dy = self.compute_gradient(pred)
-        target_dx, target_dy = self.compute_gradient(target)
+        return torch.mean(torch.clamp(1 - target * pred, min=0))
 
-        loss_x = self.loss_fn(pred_dx, target_dx)
-        loss_y = self.loss_fn(pred_dy, target_dy)
+class PhotometricLoss(nn.Module):
+    def __init__(self):
+        super(PhotometricLoss, self).__init__()
 
-        return loss_x + loss_y
+    def forward(self, pred, target):
+        return torch.mean(torch.abs(pred - target))
 
-    def compute_gradient(self, x):
-        dx = x[:, :, 1:, :] - x[:, :, :-1, :]
-        dy = x[:, :, :, 1:] - x[:, :, :, :-1]
-        return dx, dy
+class GradientMatchingLoss(nn.Module):
+    def __init__(self):
+        super(GradientMatchingLoss, self).__init__()
 
+    def forward(self, pred, target):
+        pred_dx = torch.abs(pred[:, :, :, :-1] - pred[:, :, :, 1:])
+        pred_dy = torch.abs(pred[:, :, :-1, :] - pred[:, :, 1:, :])
+        target_dx = torch.abs(target[:, :, :, :-1] - target[:, :, :, 1:])
+        target_dy = torch.abs(target[:, :, :-1, :] - target[:, :, 1:, :])
+        return torch.mean((pred_dx - target_dx).abs() + (pred_dy - target_dy).abs())
 
 class TVLoss(nn.Module):
     # Total Variation Loss: penalizes large gradients, letting the prediction be smoother
@@ -146,6 +149,19 @@ class TVLoss(nn.Module):
         tv_w = torch.pow(x[:, :, :, 1:] - x[:, :, :, :-1], 2).sum()
         return self.weight * (tv_h + tv_w) / (batch_size * h * w)
 
+class PerceptualLoss(nn.Module):
+    def __init__(self):
+        super(PerceptualLoss, self).__init__()
+
+    def forward(self, pred, target, vgg):
+        pred_features = vgg(pred)
+        target_features = vgg(target)
+        loss = 0
+        for pf, tf in zip(pred_features, target_features):
+            loss += F.l1_loss(pf, tf)
+        return loss
+
+
 
 def combined_loss(predicted_depth, ground_truth_depth):
     eas_loss = EdgeAwareSmoothnessLoss()(predicted_depth, ground_truth_depth)
@@ -154,6 +170,36 @@ def combined_loss(predicted_depth, ground_truth_depth):
     sasinv_loss = SASInvLoss()(predicted_depth, ground_truth_depth)
     ssim_loss = SSIMLoss()(predicted_depth, ground_truth_depth)
     tv_loss = TVLoss()(predicted_depth)
-    gd_loss = GradientDomainLoss()(predicted_depth, ground_truth_depth)
     mse_loss = nn.MSELoss()(predicted_depth, ground_truth_depth)
-    return (eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss)
+    return (eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, tv_loss, mse_loss)
+
+
+class LossManager(nn.Module):
+    def __init__(self, losses_to_use):
+        super(LossManager, self).__init__()
+        self.losses_class_list = []
+
+        if "eas" in losses_to_use: ("eas", self.losses_class_list.append(EdgeAwareSmoothnessLoss))
+        if "berhu" in losses_to_use: ("berhu", self.losses_class_list.append(BerHuLoss))
+        if "silog" in losses_to_use: ("silog", self.losses_class_list.append(SiLogLoss))
+        if "sasinv" in losses_to_use: ("sasinv", self.losses_class_list.append(SASInvLoss))
+        if "ssim" in losses_to_use: ("ssim", self.losses_class_list.append(SSIMLoss))
+        if "mse" in losses_to_use: ("mse", self.losses_class_list.append(nn.MSELoss))
+        if "tv" in losses_to_use: ("tv", self.losses_class_list.append(TVLoss))
+        if "gm" in losses_to_use: ("gm", self.losses_class_list.append(GradientMatchingLoss))
+        if "pm" in losses_to_use: ("pm", self.losses_class_list.append(PhotometricLoss))
+        if "hinge" in losses_to_use: ("hinge", self.losses_class_list.append(HingeLoss))
+
+
+    def compute_loss(self, predicted_depth, ground_truth_depth, split):
+        total_loss = 0.0
+        log_dict = {}
+
+        for name, l in self.losses_class_list:
+            loss = l(predicted_depth, ground_truth_depth)
+            total_loss += loss
+            log_dict[f'{split}_{name}_loss'] = l.item()
+
+        log_dict[f'{split}_total_loss'] = total_loss
+
+        return total_loss, log_dict
