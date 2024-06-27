@@ -5,37 +5,44 @@ def errors(gt, pred, eps=1e-6):
     valid_mask = gt > 0
     pred_eval, gt_eval = (pred[valid_mask], gt[valid_mask])
 
+    # deltas
     threshold = np.maximum(gt_eval / pred_eval, pred_eval / gt_eval)
-
     delta1 = (threshold < 1.25).float().mean()
     delta2 = (threshold < 1.5625).float().mean()
     delta3 = (threshold < 1.953125).float().mean()
 
+    # mae, rmse and abs_rel
     abs_diff = np.abs(pred_eval - gt_eval)
     mae = torch.mean(abs_diff)
     rmse = torch.sqrt(torch.mean(np.power(abs_diff, 2)))
     abs_rel = torch.mean(abs_diff / gt_eval)
 
-    log_abs_diff = torch.abs(np.log10(pred_eval.clamp(min=eps)) - np.log10(gt_eval.clamp(min=eps)))
+    # sq_rel
+    sq_norm = torch.norm(pred_eval - gt_eval)
+    sq_rel = torch.mean(sq_norm / gt_eval)
 
+    # log_mae and log_rmse
+    log_abs_diff = torch.abs(np.log10(pred_eval.clamp(min=eps)) - np.log10(gt_eval.clamp(min=eps)))
     log_mae = torch.mean(log_abs_diff)
     log_rmse = torch.sqrt(torch.mean(np.power(log_abs_diff, 2)))
-    return (mae, rmse, abs_rel, log_mae, log_rmse, delta1, delta2, delta3)
+    return (mae, rmse, abs_rel, sq_rel, log_mae, log_rmse, delta1, delta2, delta3)
 
 class Metrics(object):
 
     def __init__(self):
         self.results = {}
 
-        self.eval_keys = ['mae', 'rmse', 'abs_rel', 'log_mae', 'log_rmse', 'delta1', 'delta2', 'delta3']
+        self.eval_keys = ['mae', 'rmse', 'abs_rel', 'sq_rel', 'log_mae', 'log_rmse', 'delta1', 'delta2', 'delta3']
 
         for item in self.eval_keys:
             self.results[item] = []
 
     def update(self, gt, pred):
         assert gt.shape == pred.shape
-        mae, rmse, abs_rel, log_mae, log_rmse, delta1, delta2, delta3 = errors(gt, pred)
+        mae, rmse, abs_rel, sq_rel, log_mae, log_rmse, delta1, delta2, delta3 = errors(gt, pred)
         for item in self.eval_keys:
+            # eval(item) evaluates the input string and gets the value in current namespace
+            # that has the same name of the string
             self.results[item].append(eval(item))
 
     def retrieve_avg(self, split):

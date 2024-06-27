@@ -9,14 +9,15 @@ from utilities.metrics import Metrics
 import torch.nn.functional as F
 
 
-class OLDLitMonoDepthRT(L.LightningModule):
+class LitMonoDepthRT(L.LightningModule):
     def __init__(self, plain_model, size, lr):
-        super(OLDLitMonoDepthRT, self).__init__()
+        super(LitMonoDepthRT, self).__init__()
         self.model = plain_model
         self.resize = transforms.Resize(size=(size, size), antialias=False)
         self.lr = lr
         self.metrics = Metrics()
         self.with_scheduler = True
+        self.loss_manager = LossManager(['eas', 'berhu', 'ssim', 'silog'])
 
     def forward(self, inputs):
         return self.model(inputs)
@@ -25,23 +26,13 @@ class OLDLitMonoDepthRT(L.LightningModule):
         x, y = batch
         preds = self.model(x)
         p1, p2, p3, p4 = preds[0], preds[1], preds[2], preds[3]
-        log_dict = {}
 
         gt = self.resize(y)
 
-        eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(p1, gt)
-        loss = sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+        # computing loss and its dict to display
+        loss, log_dict = self.loss_manager.compute_loss(p1, gt, 'train')
 
-        log_dict['train_total_loss'] = loss.item()
-        log_dict['train_ssim_loss'] = ssim_loss.item()
-        log_dict['train_mse_loss'] = mse_loss.item()
-        log_dict['train_eas_loss'] = eas_loss.item()
-        log_dict['train_gd_loss'] = gd_loss.item()
-        log_dict['train_tv_loss'] = tv_loss.item()
-        log_dict['train_berhu_loss'] = berhu_loss.item()
-        log_dict['train_silog_loss'] = silog_loss.item()
-        log_dict['train_sasinv_loss'] = sasinv_loss.item()
-
+        # computing metrics to take into account
         for i in range(p1.size()[0]):
             self.metrics.update(gt[i].detach().cpu(), p1[i].detach().cpu())
         log_dict.update(self.metrics.retrieve_avg('train'))
@@ -49,12 +40,11 @@ class OLDLitMonoDepthRT(L.LightningModule):
 
         self.log_dict(log_dict, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
+        # compute loss per sub-image
         for i, pred in enumerate([p2, p3, p4]):
-            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False,
-                                   antialias=False)
-            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred,
-                                                                                                                 ground)
-            loss = loss + sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False, antialias=False)
+            sub_loss, _ = self.loss_manager.compute_loss(pred, ground, 'train')
+            loss = loss + sub_loss
 
         return loss
 
@@ -62,23 +52,13 @@ class OLDLitMonoDepthRT(L.LightningModule):
         x, y = batch
         preds = self.model(x)
         p1, p2, p3, p4 = preds[0], preds[1], preds[2], preds[3]
-        log_dict = {}
 
         gt = self.resize(y)
 
-        eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(p1, gt)
-        loss = sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+        # computing loss and its dict to display
+        loss, log_dict = self.loss_manager.compute_loss(p1, gt, 'valid')
 
-        log_dict['valid_total_loss'] = loss.item()
-        log_dict['valid_ssim_loss'] = ssim_loss.item()
-        log_dict['valid_mse_loss'] = mse_loss.item()
-        log_dict['valid_eas_loss'] = eas_loss.item()
-        log_dict['valid_gd_loss'] = gd_loss.item()
-        log_dict['valid_tv_loss'] = tv_loss.item()
-        log_dict['valid_berhu_loss'] = berhu_loss.item()
-        log_dict['valid_silog_loss'] = silog_loss.item()
-        log_dict['valid_sasinv_loss'] = sasinv_loss.item()
-
+        # computing metrics to take into account
         for i in range(p1.size()[0]):
             self.metrics.update(gt[i].detach().cpu(), p1[i].detach().cpu())
         log_dict.update(self.metrics.retrieve_avg('train'))
@@ -86,12 +66,11 @@ class OLDLitMonoDepthRT(L.LightningModule):
 
         self.log_dict(log_dict, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
+        # compute loss per sub-image
         for i, pred in enumerate([p2, p3, p4]):
-            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False,
-                                   antialias=False)
-            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred,
-                                                                                                                 ground)
-            loss = loss + sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False, antialias=False)
+            sub_loss, _ = self.loss_manager.compute_loss(pred, ground, 'valid')
+            loss = loss + sub_loss
 
         return loss
 
@@ -99,23 +78,13 @@ class OLDLitMonoDepthRT(L.LightningModule):
         x, y = batch
         preds = self.model(x)
         p1, p2, p3, p4 = preds[0], preds[1], preds[2], preds[3]
-        log_dict = {}
 
         gt = self.resize(y)
 
-        eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(p1, gt)
-        loss = sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+        # computing loss and its dict to display
+        loss, log_dict = self.loss_manager.compute_loss(p1, gt, 'test')
 
-        log_dict['test_total_loss'] = loss.item()
-        log_dict['test_ssim_loss'] = ssim_loss.item()
-        log_dict['test_mse_loss'] = mse_loss.item()
-        log_dict['test_eas_loss'] = eas_loss.item()
-        log_dict['test_gd_loss'] = gd_loss.item()
-        log_dict['test_tv_loss'] = tv_loss.item()
-        log_dict['test_berhu_loss'] = berhu_loss.item()
-        log_dict['test_silog_loss'] = silog_loss.item()
-        log_dict['test_sasinv_loss'] = sasinv_loss.item()
-
+        # computing metrics to take into account
         for i in range(p1.size()[0]):
             self.metrics.update(gt[i].detach().cpu(), p1[i].detach().cpu())
         log_dict.update(self.metrics.retrieve_avg('train'))
@@ -123,12 +92,11 @@ class OLDLitMonoDepthRT(L.LightningModule):
 
         self.log_dict(log_dict, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
+        # compute loss per sub-image
         for i, pred in enumerate([p2, p3, p4]):
-            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False,
-                                   antialias=False)
-            eas_loss, berhu_loss, silog_loss, sasinv_loss, ssim_loss, gd_loss, tv_loss, mse_loss = combined_loss(pred,
-                                                                                                                 ground)
-            loss = loss + sum([eas_loss, berhu_loss, ssim_loss, gd_loss, tv_loss, silog_loss])
+            ground = F.interpolate(gt, scale_factor=1 / (2 ** (i + 1)), mode='bicubic', align_corners=False, antialias=False)
+            sub_loss, _ = self.loss_manager.compute_loss(pred, ground, 'test')
+            loss = loss + sub_loss
 
         return loss
 
