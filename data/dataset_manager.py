@@ -7,8 +7,7 @@ from data.nyuv2_dataset import NYUV2Dataset
 from data.nyuv2_folder_dataset import NYUV2DatasetFolder
 
 
-class DatasetHandler:
-
+class DatasetManager:
     def __init__(self, path, options):
         self.path = path
         self.opt = options

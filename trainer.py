@@ -2,7 +2,7 @@ import lightning as L
 import pandas as pd
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
-from data.dataset_handler import DatasetHandler
+from data.dataset_handler import DatasetManager
 from model.unet.lightning_model import LitUNet
 from model.unet.net import UNet
 from utilities.plots import plot_predictions
@@ -198,7 +198,7 @@ class Trainer:
 
     def get_data(self):
         print('### INITIALIZING DATALOADERS')
-        h = DatasetHandler(self.opt.data_path, self.opt)
+        h = DatasetManager(self.opt.data_path, self.opt)
         if self.opt.dataset == 'nyu_v2':
             train_data, valid_data, test_data = h.load_nyu_v2()
         elif self.opt.dataset == 'diode_val':
