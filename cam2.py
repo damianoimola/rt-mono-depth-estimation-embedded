@@ -13,7 +13,7 @@ opts = options.parse()
 matplotlib.use('TkAgg')
 
 # model = "28e_kaggle"
-model = "mdrt20e_kaggle"
+model = "mdrt12e_kaggle"
 
 def show(img):
     plt.imshow(img, cmap="plasma")
@@ -43,13 +43,10 @@ def start_capture(trainer, height, width):
     # Initialize webcam
     cap = cv2.VideoCapture(0)
 
-    # Define the codec and create VideoWriter object
-    # out = cv2.VideoWriter(f'video/{model}_output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 60, (width, height))
-    out = cv2.VideoWriter(f'video/{model}_output.avi', cv2.VideoWriter_fourcc(*'XVID'), 60, (width, height))
-
+    frames = []
+    start_time = time.time()  # start time of the loop
     while (cap.isOpened()):
         ret, frame = cap.read()
-        start_time = time.time()  # start time of the loop
         frame = cv2.resize(frame, (width, height))
 
         if not ret:
@@ -63,21 +60,32 @@ def start_capture(trainer, height, width):
         depth_map_colored = cv2.applyColorMap(depth_map, cv2.COLORMAP_PLASMA)
 
         # Write the frame into the output video file
-        out.write(depth_map_colored)
+        frames.append(depth_map_colored)
 
         # Display the resulting frame
         cv2.imshow('Depth Map', depth_map_colored)
 
-        print("FPS: ", 1.0 / (time.time() - start_time + 1e-6))
-
         # Press Q on keyboard to exit
         if cv2.waitKey(1) & 0xFF == ord('q'): break
+    end_time = time.time()
 
     # Release everything if job is finished
     cap.release()
-    out.release()
     cv2.destroyAllWindows()
 
+    total_time = end_time - start_time
+    fps = len(frames) / total_time
+
+    print("MEAN FPS: ", fps)
+
+    # Define the codec and create VideoWriter object
+    out = cv2.VideoWriter(f'video/mean_{model}_output.avi', cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height))
+
+    # Write the frames to the video file
+    for frame in frames:
+        out.write(frame)
+
+    out.release()
 
 if __name__ == "__main__":
     trainer = Trainer(opts)

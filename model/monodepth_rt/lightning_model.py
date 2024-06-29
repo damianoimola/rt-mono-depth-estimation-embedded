@@ -17,7 +17,7 @@ class LitMonoDepthRT(L.LightningModule):
         self.lr = lr
         self.metrics = Metrics()
         self.with_scheduler = True
-        self.loss_manager = LossManager(['eas', 'berhu', 'ssim', 'silog'])
+        self.loss_manager = LossManager(['eas', 'berhu', 'ssim', 'silog', 'tv', 'gm'])
 
     def forward(self, inputs):
         return self.model(inputs)

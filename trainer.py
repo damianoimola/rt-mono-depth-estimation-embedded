@@ -2,7 +2,7 @@ import lightning as L
 import pandas as pd
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
-from data.dataset_handler import DatasetManager
+from data.dataset_manager import DatasetManager
 from model.unet.lightning_model import LitUNet
 from model.unet.net import UNet
 from utilities.plots import plot_predictions
@@ -122,12 +122,12 @@ class Trainer:
         ax.plot(results['train_sasinv_loss_epoch'].dropna(ignore_index=True), label='train SaSInv loss', color='coral')
 
         ax.plot(results['valid_total_loss'].dropna(ignore_index=True), label='validation total loss', color='dodgerblue', alpha=0.5)
-        ax.plot(results['valid_mse_loss'].dropna(ignore_index=True), label='validation MSE loss', color='orangered', alpha=0.5)
+        # ax.plot(results['valid_mse_loss'].dropna(ignore_index=True), label='validation MSE loss', color='orangered', alpha=0.5)
         ax.plot(results['valid_ssim_loss'].dropna(ignore_index=True), label='validation MSE loss', color='mediumseagreen', alpha=0.5)
         ax.plot(results['valid_berhu_loss'].dropna(ignore_index=True), label='validation BerHu loss', color='goldenrod', alpha=0.5)
         ax.plot(results['valid_eas_loss'].dropna(ignore_index=True), label='validation EAS loss', color='darkgreen', alpha=0.5)
         ax.plot(results['valid_silog_loss'].dropna(ignore_index=True), label='validation SiLog loss', color='palegreen', alpha=0.5)
-        ax.plot(results['valid_sasinv_loss'].dropna(ignore_index=True), label='validation SaSInv loss', color='coral', alpha=0.5)
+        # ax.plot(results['valid_sasinv_loss'].dropna(ignore_index=True), label='validation SaSInv loss', color='coral', alpha=0.5)
         ax.legend(loc='upper center', prop = { "size": 7.5 }, bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=2)
         # ax.set_ylim(0, 2)
         ax.grid()
