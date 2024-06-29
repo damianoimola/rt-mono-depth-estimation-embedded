@@ -3,6 +3,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 from data.dataset_manager import DatasetManager
+from model.monodert.lightning_model import LitMonoDeRT
+from model.monodert.net import MonoDeRT
 from model.unet.lightning_model import LitUNet
 from model.unet.net import UNet
 from utilities.plots import plot_predictions
@@ -49,7 +51,12 @@ class Trainer:
             return MonoDepthRT, LitMonoDepthRT
 
         elif self.opt.model_name == 'monodert':
-            return None, None
+            self.plain_model = MonoDeRT(3, 1, False)
+            self.lit_model = LitMonoDeRT(self.plain_model.to(self.device), self.opt.height, self.opt.learning_rate)
+            return MonoDepthRT, LitMonoDepthRT
+
+        else:
+            raise("Choose an existing model")
 
     def train(self):
         self.train_dataloader, self.valid_dataloader, self.test_dataloader = self.get_data()
@@ -69,7 +76,10 @@ class Trainer:
         self.trainer.save_checkpoint(f'{self.opt.checkpoint_dir}/{self.experiment_name}.ckpt')
 
     def load(self, checkpoint_name):
-        self.checkpoint_path = f'{self.opt.checkpoint_dir}/{checkpoint_name}.ckpt'
+        if self.opt.in_root:
+            self.checkpoint_path = f'{checkpoint_name}.ckpt'
+        else:
+            self.checkpoint_path = f'{self.opt.checkpoint_dir}/{checkpoint_name}.ckpt'
 
         _, lit_class = self.select_model()
 

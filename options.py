@@ -95,7 +95,7 @@ class Options:
             '--model_name',
             type=str,
             help='name of the model to be used',
-            default='monodepthrt',
+            default='monodert',
             choices=['unet', 'monodepthrt', 'monodert'])
 
         self.parser.add_argument(
@@ -115,6 +115,14 @@ class Options:
             type=int,
             help='number of epochs',
             default=200)
+
+
+        # CAM INFERENCE
+        self.parser.add_argument(
+            '--in_root',
+            type=bool,
+            help='whether the checkpoint is in the root or in the it dedicated folder',
+            default=False)
 
     def parse(self):
         self.options = self.parser.parse_args()

@@ -1,5 +1,6 @@
 /checkpoints/
 /video/
+.git
 *.ckpt
 utilities/losses_marigold.py
 utilities/metrics_marigold.py
