@@ -4,11 +4,10 @@ import torch.nn.functional as F
 
 
 class MonoDeRT(nn.Module):
-    def __init__(self, in_channels, out_channels, multi_output, with_comb_output=False, mode='sum'):
+    def __init__(self, in_channels, out_channels, multi_output=False, mode='sum'):
         super(MonoDeRT, self).__init__()
         self.mode = mode
         self.mo = multi_output
-        self.comb = with_comb_output
 
         self.enc1 = self.conv_block(in_channels, 64)
         self.enc2 = self.conv_block(64, 128)

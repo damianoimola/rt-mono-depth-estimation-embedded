@@ -1,5 +1,8 @@
+import os
+import numpy as np
 import lightning as L
 import pandas as pd
+import torch
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 from data.dataset_manager import DatasetManager
@@ -75,6 +78,38 @@ class Trainer:
     def save(self):
         self.trainer.save_checkpoint(f'{self.opt.checkpoint_dir}/{self.experiment_name}.ckpt')
 
+    def quant(self):
+        def print_model_size(mdl):
+            torch.save(mdl.state_dict(), "tmp.pt")
+            print("%.2f MB" % (os.path.getsize("tmp.pt") / 1e6))
+            os.remove('tmp.pt')
+
+        print_model_size(self.plain_model)
+
+        # backend = "qnnpack"
+        # backend = "x86"
+        backend = "fbgemm"
+        self.plain_model.qconfig = torch.quantization.get_default_qconfig(backend)
+        torch.backends.quantized.engine = backend
+
+        self.plain_model = torch.quantization.prepare(self.plain_model, inplace=False)
+
+        # model_static_quantized = torch.quantization.convert(model_static_quantized, inplace=False)
+        self.plain_model = torch.quantization.convert(self.plain_model, inplace=False)
+
+        # print_model_size(model_static_quantized)
+        print_model_size(self.plain_model)
+
+    def prune(self):
+        import torch.nn.utils.prune as prune
+
+        for name, module in self.plain_model.named_modules():
+            # prune 20% of connections in all 2D-conv layers
+            if isinstance(module, torch.nn.Conv2d):
+                prune.l1_unstructured(module, name='weight', amount=0.1)
+                # prune.random_unstructured(module, name='weight', amount=0.2)
+                # prune.ln_structured(module, name='weight', amount=0.2, n=2, dim=0)
+
     def load(self, checkpoint_name):
         if self.opt.in_root:
             self.checkpoint_path = f'{checkpoint_name}.ckpt'
@@ -91,6 +126,28 @@ class Trainer:
         )
 
         self.loaded = True
+
+
+    def save_as_onnx(self):
+        torch.onnx.export(self.plain_model, torch.randn(1, 3, 256, 256), "model.onnx", input_names=["input"], output_names=["output"])
+
+    def load_from_onnx(self):
+        import onnx
+        import onnxruntime as ort
+
+        # Load the ONNX model
+        onnx_model = onnx.load("model.onnx")
+
+        # Check the model
+        onnx.checker.check_model(onnx_model)
+        print("ONNX model is valid")
+
+        # Run the model with ONNX Runtime
+        self.ort_session = ort.InferenceSession("model.onnx")
+
+    def onnx_predict(self, frame):
+        # Perform inference
+        return self.ort_session.run(None, {"input": frame})
 
     def set_eval(self):
         self.lit_model.eval()

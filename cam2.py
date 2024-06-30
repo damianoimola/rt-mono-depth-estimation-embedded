@@ -13,7 +13,7 @@ opts = options.parse()
 matplotlib.use('TkAgg')
 
 # model = "28e_kaggle"
-model = "mdrt12e_kaggle"
+model = "mde2e_kaggle"
 
 def show(img):
     plt.imshow(img, cmap="plasma")

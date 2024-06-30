@@ -14,7 +14,7 @@ matplotlib.use('TkAgg')
 
 # model = "28e_kaggle"
 # model = "mdrt20e_kaggle"
-model = "mde2e_kaggle"
+model = "mde10e_kaggle"
 
 def show(img):
     plt.imshow(img, cmap="plasma")
@@ -83,6 +83,9 @@ def start_capture(trainer, height, width):
 if __name__ == "__main__":
     trainer = Trainer(opts)
     trainer.load(model)
+
+    # trainer.quant()
+    # trainer.prune()
 
     start_capture(trainer, opts.height, opts.width)
 
