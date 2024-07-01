@@ -78,38 +78,6 @@ class Trainer:
     def save(self):
         self.trainer.save_checkpoint(f'{self.opt.checkpoint_dir}/{self.experiment_name}.ckpt')
 
-    def quant(self):
-        def print_model_size(mdl):
-            torch.save(mdl.state_dict(), "tmp.pt")
-            print("%.2f MB" % (os.path.getsize("tmp.pt") / 1e6))
-            os.remove('tmp.pt')
-
-        print_model_size(self.plain_model)
-
-        # backend = "qnnpack"
-        # backend = "x86"
-        backend = "fbgemm"
-        self.plain_model.qconfig = torch.quantization.get_default_qconfig(backend)
-        torch.backends.quantized.engine = backend
-
-        self.plain_model = torch.quantization.prepare(self.plain_model, inplace=False)
-
-        # model_static_quantized = torch.quantization.convert(model_static_quantized, inplace=False)
-        self.plain_model = torch.quantization.convert(self.plain_model, inplace=False)
-
-        # print_model_size(model_static_quantized)
-        print_model_size(self.plain_model)
-
-    def prune(self):
-        import torch.nn.utils.prune as prune
-
-        for name, module in self.plain_model.named_modules():
-            # prune 20% of connections in all 2D-conv layers
-            if isinstance(module, torch.nn.Conv2d):
-                prune.l1_unstructured(module, name='weight', amount=0.1)
-                # prune.random_unstructured(module, name='weight', amount=0.2)
-                # prune.ln_structured(module, name='weight', amount=0.2, n=2, dim=0)
-
     def load(self, checkpoint_name):
         if self.opt.in_root:
             self.checkpoint_path = f'{checkpoint_name}.ckpt'
@@ -127,37 +95,55 @@ class Trainer:
 
         self.loaded = True
 
-
-    def save_as_onnx(self):
-        torch.onnx.export(self.plain_model, torch.randn(1, 3, 256, 256), "model.onnx", input_names=["input"], output_names=["output"])
-
-    def load_from_onnx(self):
-        import onnx
-        import onnxruntime as ort
-
-        # Load the ONNX model
-        onnx_model = onnx.load("model.onnx")
-
-        # Check the model
-        onnx.checker.check_model(onnx_model)
-        print("ONNX model is valid")
-
-        # Run the model with ONNX Runtime
-        self.ort_session = ort.InferenceSession("model.onnx")
-
-    def onnx_predict(self, frame):
-        # Perform inference
-        return self.ort_session.run(None, {"input": frame})
-
     def set_eval(self):
         self.lit_model.eval()
 
     def set_train(self):
         self.lit_model.train()
 
+
+
+
+    ###################################
+    ###   Inference                 ###
+    ###################################
     def predict(self, input):
         return self.lit_model(input.to(self.lit_model.device))
 
+
+
+
+
+    ###################################
+    ###   Data Management           ###
+    ###################################
+    def get_data(self):
+        print('### INITIALIZING DATALOADERS')
+        h = DatasetManager(self.opt.data_path, self.opt)
+        if self.opt.dataset == 'nyu_v2':
+            train_data, valid_data, test_data = h.load_nyu_v2()
+        elif self.opt.dataset == 'diode_val':
+            train_data, valid_data, test_data = h.load_diode()
+        elif self.opt.dataset == 'nyu_v2_folder':
+            train_data, valid_data, test_data = h.load_nyu_v2_folders()
+        else:
+            train_data, valid_data, test_data = (None, None, None)
+
+        train_dataloader = DataLoader(train_data, batch_size=self.opt.batch_size, shuffle=True, num_workers=0) #self.opt.num_workers
+        valid_dataloader = DataLoader(valid_data, batch_size=self.opt.batch_size, shuffle=False, num_workers=0)
+        test_dataloader = DataLoader(test_data, batch_size=self.opt.batch_size, shuffle=True, num_workers=0)
+
+        print('### DATALOADERS INITIALIZED')
+        return (train_dataloader, valid_dataloader, test_dataloader)
+
+
+
+
+
+
+    ###################################
+    ###   Plotting                  ###
+    ###################################
     def plot_metrics(self, path_to_metrics=None):
         if path_to_metrics is None:
             if not self.loaded:
@@ -263,21 +249,82 @@ class Trainer:
         all_preds = self.predict(inputs)
         plot_predictions(inputs, target, all_preds, save=save, title=title)
 
-    def get_data(self):
-        print('### INITIALIZING DATALOADERS')
-        h = DatasetManager(self.opt.data_path, self.opt)
-        if self.opt.dataset == 'nyu_v2':
-            train_data, valid_data, test_data = h.load_nyu_v2()
-        elif self.opt.dataset == 'diode_val':
-            train_data, valid_data, test_data = h.load_diode()
-        elif self.opt.dataset == 'nyu_v2_folder':
-            train_data, valid_data, test_data = h.load_nyu_v2_folders()
-        else:
-            train_data, valid_data, test_data = (None, None, None)
 
-        train_dataloader = DataLoader(train_data, batch_size=self.opt.batch_size, shuffle=True, num_workers=0) #self.opt.num_workers
-        valid_dataloader = DataLoader(valid_data, batch_size=self.opt.batch_size, shuffle=False, num_workers=0)
-        test_dataloader = DataLoader(test_data, batch_size=self.opt.batch_size, shuffle=True, num_workers=0)
 
-        print('### DATALOADERS INITIALIZED')
-        return (train_dataloader, valid_dataloader, test_dataloader)
+
+
+    ###################################
+    ###   Optimization              ###
+    ###################################
+    def quant(self):
+        def print_model_size(mdl):
+            torch.save(mdl.state_dict(), "tmp.pt")
+            print("%.2f MB" % (os.path.getsize("tmp.pt") / 1e6))
+            os.remove('tmp.pt')
+
+        print_model_size(self.plain_model)
+
+        # backend = "qnnpack"
+        # backend = "x86"
+        backend = "fbgemm"
+        self.plain_model.qconfig = torch.quantization.get_default_qconfig(backend)
+        torch.backends.quantized.engine = backend
+
+        self.plain_model = torch.quantization.prepare(self.plain_model, inplace=False)
+
+        # model_static_quantized = torch.quantization.convert(model_static_quantized, inplace=False)
+        self.plain_model = torch.quantization.convert(self.plain_model, inplace=False)
+
+        # print_model_size(model_static_quantized)
+        print_model_size(self.plain_model)
+
+    def prune(self):
+        import torch.nn.utils.prune as prune
+
+        for name, module in self.plain_model.named_modules():
+            # prune 20% of connections in all 2D-conv layers
+            if isinstance(module, torch.nn.Conv2d):
+                prune.l1_unstructured(module, name='weight', amount=0.1)
+                # prune.random_unstructured(module, name='weight', amount=0.2)
+                # prune.ln_structured(module, name='weight', amount=0.2, n=2, dim=0)
+
+
+
+
+
+
+    ###################################
+    ###   TorchScript               ###
+    ###################################
+    def save_as_torch_script(self):
+        self.plain_model.eval()
+        traced_model = torch.jit.trace(self.plain_model, torch.randn(1, 3, 256, 256))
+        traced_model.save("model.pt")
+
+
+
+
+
+
+
+    ###################################
+    ###   ONNX                      ###
+    ###################################
+    def save_as_onnx(self):
+        self.plain_model.eval()
+        torch.onnx.export(self.plain_model, torch.randn(1, 3, 256, 256), "model.onnx", input_names=["input"], output_names=["output"], opset_version=11)
+
+    def load_from_onnx(self):
+        import onnx
+        import onnxruntime as ort
+
+        # load ONNX model
+        onnx_model = onnx.load("model.onnx")
+
+        onnx.checker.check_model(onnx_model)
+        print("ONNX model is valid")
+
+        self.ort_session = ort.InferenceSession("model.onnx")
+
+    def onnx_predict(self, frame):
+        return self.ort_session.run(None, {"input": frame})
