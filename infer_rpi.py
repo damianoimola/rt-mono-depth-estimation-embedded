@@ -2,7 +2,6 @@ import time
 from options import Options
 import cv2
 import numpy as np
-import onnx
 import onnxruntime as ort
 
 options = Options()
@@ -14,7 +13,6 @@ def predict_depth(ort_session, frame):
     frame = np.expand_dims(frame, axis=0).astype(np.float32)
     frame = frame.transpose((0, 3, 1, 2))/255.0
 
-    # depth_map = trainer.onnx_predict(frame)[0].squeeze()
     depth_map = ort_session.run(None, {"input": frame})[0].squeeze()
 
     depth_map = (depth_map * 255.0)
@@ -113,12 +111,6 @@ def start_capture_online_fps(ort_session, height, width):
 
 
 if __name__ == "__main__":
-    onnx_model = onnx.load("model.onnx")
-
-    # check model validity
-    onnx.checker.check_model(onnx_model)
-    print("ONNX model is valid")
-
     # setup runtime options
     so = ort.SessionOptions()
     so.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
@@ -141,7 +133,8 @@ if __name__ == "__main__":
     # cuda_options['cudnn_conv_use_max_workspace'] = '1'
     # ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
 
-    start_capture_mean_fps(ort_session, opts.height, opts.width)
+    # start_capture_mean_fps(ort_session, opts.height, opts.width)
+    start_capture_online_fps(ort_session, opts.height, opts.width)
 
 
 

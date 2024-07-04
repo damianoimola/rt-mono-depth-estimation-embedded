@@ -368,17 +368,8 @@ class Trainer:
 
         self.ort_session = ort.InferenceSession("model.onnx")
 
-    def load_from_onnx_optimized(self):
-        import onnx
+    def load_from_onnx_optimized(self, model_name="model.onnx"):
         import onnxruntime as ort
-
-        # load ONNX model
-        onnx_model = onnx.load("model.onnx")
-
-        onnx.helper.printable_graph(onnx_model.graph)
-
-        onnx.checker.check_model(onnx_model)
-        print("ONNX model is valid")
 
         so = onnxruntime.SessionOptions()
         so.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
@@ -389,7 +380,7 @@ class Trainer:
             'CPUExecutionProvider'
         ]
 
-        self.ort_session = ort.InferenceSession("model.onnx", so, providers=exec_providers)
+        self.ort_session = ort.InferenceSession(model_name, so, providers=exec_providers)
 
         # options = self.ort_session.get_provider_options()
         # cuda_options = options['CUDAExecutionProvider']
@@ -397,6 +388,36 @@ class Trainer:
         # self.ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
         print("ONNX loaded")
 
+    def load_from_onnx_quant_optimized(self):
+        self.load_from_onnx_optimized("quantized_model.onnx")
+
+    def onnx_quant(self):
+        from onnxruntime.quantization import quantize_static, CalibrationDataReader, QuantType
+
+        # Create a calibration data reader
+        class MyDataReader(CalibrationDataReader):
+            def __init__(self, input_data):
+                self.data = input_data
+                self.enum_data = None
+
+            def get_next(self):
+                if self.enum_data is None:
+                    self.enum_data = iter(self.data)
+                return next(self.enum_data, None)
+
+            def rewind(self):
+                self.enum_data = None
+
+        # Prepare your calibration dataset
+        calibration_data = []
+
+        # Create a data reader instance
+        calibration_data_reader = MyDataReader(calibration_data)
+
+        # Quantize the model
+        quantize_static("model.onnx", "quantized_model.onnx", calibration_data_reader, quant_format=QuantType.QUInt8)
+
+        print(f'ONNX Quantized')
 
     def onnx_predict(self, frame):
         return self.ort_session.run(None, {"input": frame})
