@@ -4,3 +4,5 @@
 *.ckpt
 utilities/losses_marigold.py
 utilities/metrics_marigold.py
+torch_vs_onnx.py
+tensorrt_sample_usage.py
