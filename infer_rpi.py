@@ -125,18 +125,21 @@ if __name__ == "__main__":
     so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
     # setup execution providers (ordered)
-    exec_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+    exec_providers = [
+        ('CUDAExecutionProvider', {"cudnn_conv_use_max_workspace": '1'}),
+        'CPUExecutionProvider'
+    ]
 
-    # define onnx runtime session
+    # define onnx runtime inference session
     ort_session = ort.InferenceSession("model.onnx", so, providers=exec_providers)
 
-    # setup runtime options
-    options = ort_session.get_provider_options()
-    cuda_options = options['CUDAExecutionProvider']
-    cuda_options['cudnn_conv_use_max_workspace'] = '1'
-    ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
-
     print("ONNX loaded")
+
+    # setup runtime options
+    # options = ort_session.get_provider_options()
+    # cuda_options = options['CUDAExecutionProvider']
+    # cuda_options['cudnn_conv_use_max_workspace'] = '1'
+    # ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
 
     start_capture_mean_fps(ort_session, opts.height, opts.width)
 
