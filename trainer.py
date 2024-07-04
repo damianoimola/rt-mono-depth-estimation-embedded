@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import lightning as L
+import onnxruntime
 import pandas as pd
 import torch
 from matplotlib import pyplot as plt
@@ -291,6 +292,28 @@ class Trainer:
 
 
 
+    ###################################
+    ###   TF Lite                   ###
+    ###################################
+    # def onnx_to_tf_lite(self, onnx_model_name="model.onnx"):
+    #     import onnx
+    #     from onnx_tf.backend import prepare
+    #
+    #     onnx_model = onnx.load(onnx_model_name)
+    #     tf_rep = prepare(onnx_model)
+    #     tf_rep.export_graph("model.pb")
+    #
+    #     # Convert TensorFlow to TensorFlow Lite
+    #     converter = tf.lite.TFLiteConverter.from_saved_model("model.pb")
+    #     tflite_model = converter.convert()
+    #
+    #     with open("model.tflite", "wb") as f:
+    #         f.write(tflite_model)
+
+
+
+
+
 
 
     ###################################
@@ -312,7 +335,8 @@ class Trainer:
     ###################################
     def save_as_onnx(self):
         self.plain_model.eval()
-        torch.onnx.export(self.plain_model, torch.randn(1, 3, 256, 256), "model.onnx", input_names=["input"], output_names=["output"], opset_version=11)
+        torch.onnx.export(self.plain_model.cpu(), torch.randn(1, 3, 256, 256), "model.onnx", input_names=["input"], output_names=["output"])
+                          #opset_version=11)
 
     def load_from_onnx(self):
         import onnx
@@ -321,10 +345,39 @@ class Trainer:
         # load ONNX model
         onnx_model = onnx.load("model.onnx")
 
+        onnx.helper.printable_graph(onnx_model.graph)
+
         onnx.checker.check_model(onnx_model)
         print("ONNX model is valid")
 
         self.ort_session = ort.InferenceSession("model.onnx")
+
+    def load_from_onnx_optimized(self):
+        import onnx
+        import onnxruntime as ort
+
+        # load ONNX model
+        onnx_model = onnx.load("model.onnx")
+
+        onnx.helper.printable_graph(onnx_model.graph)
+
+        onnx.checker.check_model(onnx_model)
+        print("ONNX model is valid")
+
+        so = onnxruntime.SessionOptions()
+        so.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
+        so.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
+
+        exproviders = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+
+        self.ort_session = ort.InferenceSession("model.onnx", so, providers=exproviders)
+
+        options = self.ort_session.get_provider_options()
+        cuda_options = options['CUDAExecutionProvider']
+        cuda_options['cudnn_conv_use_max_workspace'] = '1'
+        self.ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
+        print("ONNX loaded")
+
 
     def onnx_predict(self, frame):
         return self.ort_session.run(None, {"input": frame})
