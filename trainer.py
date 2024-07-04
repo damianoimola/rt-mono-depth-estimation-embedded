@@ -341,11 +341,27 @@ class Trainer:
     def load_from_onnx(self):
         import onnx
         import onnxruntime as ort
+        from onnx.tools.net_drawer import GetPydotGraph, GetOpNodeProducer
 
         # load ONNX model
         onnx_model = onnx.load("model.onnx")
 
-        onnx.helper.printable_graph(onnx_model.graph)
+        print_graph = False
+        if print_graph:
+            # onnx.helper.printable_graph(onnx_model.graph)
+            print('Model :\n\n{}'.format(onnx.helper.printable_graph(onnx_model.graph)))
+
+            pydot_graph = GetPydotGraph(
+                onnx_model.graph,
+                name=onnx_model.graph.name,
+                rankdir="TB",
+                node_producer=GetOpNodeProducer("docstring"),
+            )
+            pydot_graph.write_dot("graph.dot")
+            os.system("dot -O -Tpng graph.dot")
+            image = plt.imread("graph.dot.png")
+            plt.imshow(image)
+            plt.axis("off")
 
         onnx.checker.check_model(onnx_model)
         print("ONNX model is valid")
@@ -368,14 +384,17 @@ class Trainer:
         so.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
         so.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
 
-        exproviders = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        exec_providers = [
+            ('CUDAExecutionProvider', {"cudnn_conv_use_max_workspace": '1'}),
+            'CPUExecutionProvider'
+        ]
 
-        self.ort_session = ort.InferenceSession("model.onnx", so, providers=exproviders)
+        self.ort_session = ort.InferenceSession("model.onnx", so, providers=exec_providers)
 
-        options = self.ort_session.get_provider_options()
-        cuda_options = options['CUDAExecutionProvider']
-        cuda_options['cudnn_conv_use_max_workspace'] = '1'
-        self.ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
+        # options = self.ort_session.get_provider_options()
+        # cuda_options = options['CUDAExecutionProvider']
+        # cuda_options['cudnn_conv_use_max_workspace'] = '1'
+        # self.ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
         print("ONNX loaded")
 
 

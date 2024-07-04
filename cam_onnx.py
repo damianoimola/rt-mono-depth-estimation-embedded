@@ -77,7 +77,7 @@ if __name__ == "__main__":
     trainer.load(model)
 
     trainer.save_as_onnx()
-    trainer.load_from_onnx()
+    trainer.load_from_onnx_optimized()
 
     start_capture(trainer, opts.height, opts.width)
 

@@ -115,21 +115,27 @@ def start_capture_online_fps(ort_session, height, width):
 if __name__ == "__main__":
     onnx_model = onnx.load("model.onnx")
 
+    # check model validity
     onnx.checker.check_model(onnx_model)
     print("ONNX model is valid")
 
+    # setup runtime options
     so = ort.SessionOptions()
     so.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
     so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
-    exproviders = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+    # setup execution providers (ordered)
+    exec_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
 
-    ort_session = ort.InferenceSession("model.onnx", so, providers=exproviders)
+    # define onnx runtime session
+    ort_session = ort.InferenceSession("model.onnx", so, providers=exec_providers)
 
+    # setup runtime options
     options = ort_session.get_provider_options()
     cuda_options = options['CUDAExecutionProvider']
     cuda_options['cudnn_conv_use_max_workspace'] = '1'
     ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
+
     print("ONNX loaded")
 
     start_capture_mean_fps(ort_session, opts.height, opts.width)
