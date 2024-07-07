@@ -5,7 +5,6 @@ from trainer import Trainer
 from options import Options
 import cv2
 import numpy as np
-import torch
 
 options = Options()
 opts = options.parse()
@@ -14,7 +13,7 @@ matplotlib.use('TkAgg')
 
 # model = "28e_kaggle"
 # model = "mdrt20e_kaggle"
-model = "mde35e_kaggle"
+model = "mde45e_kaggle"
 
 def show(img):
     plt.imshow(img, cmap="plasma")
@@ -76,7 +75,7 @@ if __name__ == "__main__":
     trainer = Trainer(opts)
     trainer.load(model)
 
-    trainer.save_as_onnx()
+    trainer.save_as_onnx(opts.height, opts.width)
     trainer.load_from_onnx_optimized()
 
     start_capture(trainer, opts.height, opts.width)

@@ -11,7 +11,7 @@ from model.monodert.lightning_model import LitMonoDeRT
 from model.monodert.net import MonoDeRT
 from model.unet.lightning_model import LitUNet
 from model.unet.net import UNet
-from utilities.plots import plot_predictions
+from utilities.plotting import plot_predictions
 from model.monodepth_rt.lightning_model import LitMonoDepthRT
 from model.monodepth_rt.net import MonoDepthRT
 from utilities.callbacks import get_callbacks
@@ -143,99 +143,9 @@ class Trainer:
 
 
     ###################################
-    ###   Plotting                  ###
+    ###   Display                   ###
     ###################################
-    def plot_metrics(self, path_to_metrics=None):
-        if path_to_metrics is None:
-            if not self.loaded:
-                print('LOAD SOME CHECKPOINT')
-                return
-            path_to_metrics = self.logger.log_dir
-
-        results = pd.read_csv(path_to_metrics)
-
-        import matplotlib
-        matplotlib.use('TkAgg')
-        plt.style.use('default')
-        plt.rcParams['text.usetex'] = False
-
-        fig, axes = plt.subplots(2, 2, figsize=(15, 7))
-
-        # fig, axes = plt.subplots(3, 2, figsize=(15, 7))
-        # gs = axes[0, 0].get_gridspec()
-        # for ax in axes[:2, 0]: ax.remove()
-        # ax = fig.add_subplot(gs[:2, 0])
-        ax = axes[0][0]
-        ax.set_title('Losses per epoch')
-        ax.plot(results['train_total_loss_epoch'].dropna(ignore_index=True), label='train total loss', color='dodgerblue')
-        ax.plot(results['train_mse_loss_epoch'].dropna(ignore_index=True), label='train MSE loss', color='orangered')
-        ax.plot(results['train_ssim_loss_epoch'].dropna(ignore_index=True), label='train MSE loss', color='mediumseagreen')
-        ax.plot(results['train_berhu_loss_epoch'].dropna(ignore_index=True), label='train BerHu loss', color='goldenrod')
-        ax.plot(results['train_eas_loss_epoch'].dropna(ignore_index=True), label='train EAS loss', color='darkgreen')
-        ax.plot(results['train_silog_loss_epoch'].dropna(ignore_index=True), label='train SiLog loss', color='palegreen')
-        ax.plot(results['train_sasinv_loss_epoch'].dropna(ignore_index=True), label='train SaSInv loss', color='coral')
-
-        ax.plot(results['valid_total_loss'].dropna(ignore_index=True), label='validation total loss', color='dodgerblue', alpha=0.5)
-        # ax.plot(results['valid_mse_loss'].dropna(ignore_index=True), label='validation MSE loss', color='orangered', alpha=0.5)
-        ax.plot(results['valid_ssim_loss'].dropna(ignore_index=True), label='validation MSE loss', color='mediumseagreen', alpha=0.5)
-        ax.plot(results['valid_berhu_loss'].dropna(ignore_index=True), label='validation BerHu loss', color='goldenrod', alpha=0.5)
-        ax.plot(results['valid_eas_loss'].dropna(ignore_index=True), label='validation EAS loss', color='darkgreen', alpha=0.5)
-        ax.plot(results['valid_silog_loss'].dropna(ignore_index=True), label='validation SiLog loss', color='palegreen', alpha=0.5)
-        # ax.plot(results['valid_sasinv_loss'].dropna(ignore_index=True), label='validation SaSInv loss', color='coral', alpha=0.5)
-        ax.legend(loc='upper center', prop = { "size": 7.5 }, bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=2)
-        # ax.set_ylim(0, 2)
-        ax.grid()
-
-
-
-        ax = axes[1][1]
-        ax.set_title('Deltas per epoch')
-        # plt.rcParams['text.usetex'] = True
-        ax.plot(results['train_delta1_epoch'].dropna(ignore_index=True), color='royalblue', label='δ_1 train')
-        ax.plot(results['train_delta2_epoch'].dropna(ignore_index=True), color='cornflowerblue', label='δ_2 train')
-        ax.plot(results['train_delta3_epoch'].dropna(ignore_index=True), color='lightsteelblue', label='δ_3 train')
-
-        ax.plot(results['valid_delta1'].dropna(ignore_index=True), color='orangered', label='δ_1 validation')
-        ax.plot(results['valid_delta2'].dropna(ignore_index=True), color='coral', label='δ_2 validation')
-        ax.plot(results['valid_delta3'].dropna(ignore_index=True), color='darksalmon', label='δ_3 validation')
-        ax.legend(loc='upper center', prop = { "size": 7.5 }, bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=2)
-        ax.grid()
-        # plt.rcParams['text.usetex'] = False
-
-
-
-        ax = axes[1][0]
-        ax.set_title('Absolute Relative Error per epoch')
-        ax.plot(results['train_abs_rel_epoch'].dropna(ignore_index=True), color='crimson', label='(AbsRel) absolute relative error train')
-        ax.plot(results['valid_abs_rel'].dropna(ignore_index=True), color='crimson', label='(AbsRel) absolute relative error validation', alpha=0.7)
-        ax.legend(loc='upper center', prop = { "size": 7.5 }, bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=1)
-        ax.grid()
-
-
-
-        # gs = axes[2, 0].get_gridspec()
-        # for ax in axes[2, :2]: ax.remove()
-        # ax = fig.add_subplot(gs[2, :2])
-        ax = axes[0][1]
-        ax.set_title('Errors per epoch')
-        ax.plot(results['train_mae_epoch'].dropna(ignore_index=True), color='royalblue', label='(MAE) mean absolute error train')
-        ax.plot(results['train_log_mae_epoch'].dropna(ignore_index=True), color='cornflowerblue', label='(MAElog) mean absolute log error train')
-        ax.plot(results['train_rmse_epoch'].dropna(ignore_index=True), color='darkgreen', label='(RMSE) root mean squared error')
-        ax.plot(results['train_log_rmse_epoch'].dropna(ignore_index=True), color='forestgreen', label='(RMSElog) root mean squared log error')
-
-        ax.plot(results['valid_mae'].dropna(ignore_index=True), color='royalblue', label='(MAE) mean absolute error validation', alpha=0.7)
-        ax.plot(results['valid_log_mae'].dropna(ignore_index=True), color='cornflowerblue', label='(MAElog) mean absolute log error validation', alpha=0.7)
-        ax.plot(results['valid_rmse'].dropna(ignore_index=True), color='darkgreen', label='(RMSE) root mean squared error validation', alpha=0.7)
-        ax.plot(results['valid_log_rmse'].dropna(ignore_index=True), color='forestgreen', label='(RMSElog) root mean squared log error validation', alpha=0.7)
-        # ax.set_ylim(0, 2)
-        ax.legend(loc='upper center', prop = { "size": 7.5 }, bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=2)
-        ax.grid()
-
-        fig.tight_layout(pad=1.0)
-
-        plt.show()
-
-    def plot_batch_predictions(self, save=False, title=None):
+    def display_batch_predictions(self, save=False, title=None):
         if not self.loaded:
             print('LOAD SOME CHECKPOINT')
             return
@@ -292,36 +202,14 @@ class Trainer:
 
 
 
-    ###################################
-    ###   TF Lite                   ###
-    ###################################
-    # def onnx_to_tf_lite(self, onnx_model_name="model.onnx"):
-    #     import onnx
-    #     from onnx_tf.backend import prepare
-    #
-    #     onnx_model = onnx.load(onnx_model_name)
-    #     tf_rep = prepare(onnx_model)
-    #     tf_rep.export_graph("model.pb")
-    #
-    #     # Convert TensorFlow to TensorFlow Lite
-    #     converter = tf.lite.TFLiteConverter.from_saved_model("model.pb")
-    #     tflite_model = converter.convert()
-    #
-    #     with open("model.tflite", "wb") as f:
-    #         f.write(tflite_model)
-
-
-
-
-
 
 
     ###################################
     ###   TorchScript               ###
     ###################################
-    def save_as_torch_script(self):
+    def save_as_torch_script(self, width, height):
         self.plain_model.eval()
-        traced_model = torch.jit.trace(self.plain_model, torch.randn(1, 3, 256, 256))
+        traced_model = torch.jit.trace(self.plain_model, torch.randn(1, 3, width, height))
         traced_model.save("model.pt")
 
 
@@ -333,9 +221,9 @@ class Trainer:
     ###################################
     ###   ONNX                      ###
     ###################################
-    def save_as_onnx(self):
+    def save_as_onnx(self, width, height):
         self.plain_model.eval()
-        torch.onnx.export(self.plain_model.cpu(), torch.randn(1, 3, 256, 256), "model.onnx", input_names=["input"], output_names=["output"])
+        torch.onnx.export(self.plain_model.cpu(), torch.randn(1, 3, width, height), "model.onnx", input_names=["input"], output_names=["output"])
                           #opset_version=11)
 
     def load_from_onnx(self):
@@ -376,7 +264,7 @@ class Trainer:
         so.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
 
         exec_providers = [
-            ('CUDAExecutionProvider', {"cudnn_conv_use_max_workspace": '1'}),
+            # ('CUDAExecutionProvider', {"cudnn_conv_use_max_workspace": '1'}),
             'CPUExecutionProvider'
         ]
 
