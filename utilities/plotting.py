@@ -56,7 +56,6 @@ def plot_predictions(input, target, all_preds, save=False, title='output', batch
     plt.show()
 
 
-
 def plot_metrics(path_to_metrics):
     results = pd.read_csv(path_to_metrics)
 
@@ -130,7 +129,6 @@ def plot_metrics(path_to_metrics):
     fig.tight_layout(pad=1.0)
 
     plt.show()
-
 
 
 def point_cloud_viz(input, prediction):
