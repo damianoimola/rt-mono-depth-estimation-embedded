@@ -20,4 +20,4 @@ For the data I'm going to use, NYU Depth V2 (a subsample of 50.000 samples again
 # Proposed method
 The novel model called MonoDeRT (that stands for: Monocular Depth Estimation Real-Time) is a pyramidal encoder-decoder model with residual connections, that leverage the bicubic interpolation in both upsampling and downsampling. Follows its graphical representation
 
-![MonoDeRT architecture](https://raw.githubusercontent.com/damianoimola/rt-mono-depth-estimation-embedded/master/images/monodert.drawio.svg)
+![MonoDeRT architecture](https://raw.githubusercontent.com/damianoimola/rt-mono-depth-estimation-embedded/master/images/monodert.jpg)
