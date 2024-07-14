@@ -175,9 +175,9 @@ class Trainer:
 
         print_model_size(self.plain_model)
 
-        # backend = "qnnpack"
+        backend = "qnnpack"
         # backend = "x86"
-        backend = "fbgemm"
+        # backend = "fbgemm"
         self.plain_model.qconfig = torch.quantization.get_default_qconfig(backend)
         torch.backends.quantized.engine = backend
 
@@ -264,7 +264,7 @@ class Trainer:
         so.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
 
         exec_providers = [
-            # ('CUDAExecutionProvider', {"cudnn_conv_use_max_workspace": '1'}),
+            ('CUDAExecutionProvider', {"cudnn_conv_use_max_workspace": '1'}),
             'CPUExecutionProvider'
         ]
 

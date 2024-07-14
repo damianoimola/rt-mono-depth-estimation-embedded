@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class MonoDeRT(nn.Module):
+class MonoDeRTs(nn.Module):
     def __init__(self, in_channels, out_channels, multi_output=False, mode='sum'):
-        super(MonoDeRT, self).__init__()
+        super(MonoDeRTs, self).__init__()
         self.mode = mode
         self.mo = multi_output
 
@@ -40,7 +40,9 @@ class MonoDeRT(nn.Module):
 
     def prediction_decoder(self, in_channels, out_channels):
         return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels // 2, out_channels, kernel_size=3, stride=1, padding=1),
             nn.Sigmoid())
 
     def forward(self, x):

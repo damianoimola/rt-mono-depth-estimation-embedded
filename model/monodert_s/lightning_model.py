@@ -8,9 +8,9 @@ from utilities.losses import combined_loss, LossManager
 from utilities.metrics import Metrics
 import torch.nn.functional as F
 
-class LitMonoDeRT(L.LightningModule):
+class LitMonoDeRTs(L.LightningModule):
     def __init__(self, plain_model, size, lr):
-        super(LitMonoDeRT, self).__init__()
+        super(LitMonoDeRTs, self).__init__()
         self.model = plain_model
         self.resize = transforms.Resize(size=(size, size), antialias=False)
         self.lr = lr

@@ -23,7 +23,7 @@ def plot_predictions(input, target, all_preds, save=False, title='output', batch
     # number of predictions for each sample in batch
     num_preds = 1
 
-    fig, axes = plt.subplots(batch_size, num_preds + 2, figsize=(13, 13))
+    fig, axes = plt.subplots(batch_size, num_preds + 2, figsize=(7.5/1.2, 10/1.2))
     for i in range(batch_size):
         for j in range(num_preds + 2):
             ax = axes[i, j]
@@ -49,7 +49,7 @@ def plot_predictions(input, target, all_preds, save=False, title='output', batch
 
             ax.axis('off')
             print("PREPRINT", pred.shape)
-            ax.imshow(pred, cmap='plasma')
+            ax.imshow(pred, cmap='plasma') #rainbow
 
     if save: plt.savefig(f'images/{title}.png')
     plt.tight_layout()

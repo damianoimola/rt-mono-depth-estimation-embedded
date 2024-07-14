@@ -27,6 +27,7 @@ def start_capture_mean_fps(ort_session, height, width):
 
     frames = []
     start_time = time.time()  # start time of the loop
+    old_time = start_time
     while (cap.isOpened()):
         ret, frame = cap.read()
         frame = cv2.resize(frame, (width, height))
@@ -38,11 +39,20 @@ def start_capture_mean_fps(ort_session, height, width):
         # Predict depth map from frame
         depth_map = predict_depth(ort_session, frame)
 
+        # actual FPS
+        new_time = time.time()
+        fps = 1.0 / (new_time - old_time + 1e-6)
+        old_time =  new_time
+
         # Normalize depth map for visualization
         depth_map_colored = cv2.applyColorMap(depth_map, cv2.COLORMAP_PLASMA)
+        # depth_map_colored = cv2.applyColorMap(depth_map, cv2.COLORMAP_RAINBOW)
 
         # Write the frame into the output video file
         frames.append(depth_map_colored)
+
+        # Write number of FPS
+        cv2.putText(depth_map_colored, f"FPS: {fps}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
         # Display the resulting frame
         cv2.imshow('Depth Map', depth_map_colored)
@@ -70,12 +80,13 @@ def start_capture_mean_fps(ort_session, height, width):
     out.release()
 
 
-
 def start_capture_online_fps(ort_session, height, width):
-    # Initialize webcam
+    fps = 0
+
+    # initialize webcam
     cap = cv2.VideoCapture(0)
 
-    # Define the codec and create VideoWriter object
+    # define the codec and VideoWriter
     out = cv2.VideoWriter(f'video/rpi_output.avi', cv2.VideoWriter_fourcc(*'XVID'), 60, (width, height))
 
     while (cap.isOpened()):
@@ -91,7 +102,11 @@ def start_capture_online_fps(ort_session, height, width):
         depth_map = predict_depth(ort_session, frame)
 
         # Normalize depth map for visualization
-        depth_map_colored = cv2.applyColorMap(depth_map, cv2.COLORMAP_PLASMA)
+        # depth_map_colored = cv2.applyColorMap(depth_map, cv2.COLORMAP_PLASMA)
+        depth_map_colored = cv2.applyColorMap(depth_map, cv2.COLORMAP_RAINBOW)
+
+        # Write number of FPS
+        cv2.putText(depth_map_colored, f"FPS: {fps}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
         # Write the frame into the output video file
         out.write(depth_map_colored)
@@ -99,7 +114,8 @@ def start_capture_online_fps(ort_session, height, width):
         # Display the resulting frame
         cv2.imshow('Depth Map', depth_map_colored)
 
-        print("FPS: ", 1.0 / (time.time() - start_time + 1e-6))
+        fps = np.round(1.0 / (time.time() - start_time + 1e-6), 2)
+        print("FPS: ", fps)
 
         # Press Q on keyboard to exit
         if cv2.waitKey(1) & 0xFF == ord('q'): break
@@ -108,6 +124,7 @@ def start_capture_online_fps(ort_session, height, width):
     cap.release()
     out.release()
     cv2.destroyAllWindows()
+
 
 
 if __name__ == "__main__":
@@ -126,12 +143,6 @@ if __name__ == "__main__":
     ort_session = ort.InferenceSession("model.onnx", so, providers=exec_providers)
 
     print("ONNX loaded")
-
-    # setup runtime options
-    # options = ort_session.get_provider_options()
-    # cuda_options = options['CUDAExecutionProvider']
-    # cuda_options['cudnn_conv_use_max_workspace'] = '1'
-    # ort_session.set_providers(['CUDAExecutionProvider'], [cuda_options])
 
     # start_capture_mean_fps(ort_session, opts.height, opts.width)
     start_capture_online_fps(ort_session, opts.height, opts.width)
