@@ -15,3 +15,9 @@ The project aims to design a model architecture for Real-Time Monocular Depth Es
 This is an ill-posed task that is hard due to the lightweight and fast inference constraints, so to pursue it I'll use optimization techniques learned during lectures and through some recent papers that explores the paradigm ranging from Micro-Controller Units (MCUs) to Embedded devices.
 Moreover there are some architectures that tries to decrease latency by cropping some output layers at inference, this is really helpful in order to achieve the real-time performances (i.e. >= 30 FPS) on such devices.
 For the data I'm going to use, NYU Depth V2 (a subsample of 50.000 samples against 408.000).
+
+
+# Proposed method
+The novel model called MonoDeRT (that stands for: Monocular Depth Estimation Real-Time) is a pyramidal encoder-decoder model with residual connections, that leverage the bicubic interpolation in both upsampling and downsampling. Follows its graphical representation
+
+![MonoDeRT architecture](https://raw.githubusercontent.com/damianoimola/rt-mono-depth-estimation-embedded/master/images/monodert.drawio.svg)
