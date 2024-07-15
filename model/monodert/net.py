@@ -14,11 +14,11 @@ class MonoDeRT(nn.Module):
         self.enc3 = self.conv_block(128, 256)
 
         if mode == 'concat':
-            self.dec3 = self.upconv_block(512, 128)
+            self.dec3 = self.conv_block(512, 128)
             self.pred3 = self.prediction_decoder(256, out_channels)
-            self.dec2 = self.upconv_block(256, 64)
+            self.dec2 = self.conv_block(256, 64)
             self.pred2 = self.prediction_decoder(128, out_channels)
-            self.dec1 = self.upconv_block(128, 32)
+            self.dec1 = self.conv_block(128, 32)
             self.pred1 = self.prediction_decoder(32, out_channels)
         else:
             self.dec3 = self.conv_block(256, 128)
@@ -32,12 +32,7 @@ class MonoDeRT(nn.Module):
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1),
             nn.LeakyReLU(),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.LeakyReLU())
-
-    def upconv_block(self, in_channels, out_channels):
-        return nn.Sequential(
-            nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
             nn.LeakyReLU())
 
     def prediction_decoder(self, in_channels, out_channels):
