@@ -122,7 +122,19 @@ class Options:
             '--ckpt',
             type=str,
             help='which checkpoint to load',
-            default="mde60e_kaggle.ckpt")
+            default="mde60e_kaggle")
+
+        self.parser.add_argument(
+            '--fps_verbose',
+            type=bool,
+            help='only for online mode; if the current number of FPS must be shown in command line',
+            default=False)
+
+        self.parser.add_argument(
+            '--online',
+            type=bool,
+            help='improve performances, sampling at 60 FPS',
+            default=True)
 
         self.parser.add_argument(
             '--in_root',
