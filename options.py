@@ -119,6 +119,12 @@ class Options:
 
         # CAM INFERENCE
         self.parser.add_argument(
+            '--ckpt',
+            type=str,
+            help='which checkpoint to load',
+            default="mde60e_kaggle.ckpt")
+
+        self.parser.add_argument(
             '--in_root',
             type=bool,
             help='whether the checkpoint is in the root or in the it dedicated folder',
