@@ -175,8 +175,8 @@ class Trainer:
 
         print_model_size(self.plain_model)
 
-        backend = "qnnpack"
-        # backend = "x86"
+        # backend = "qnnpack"
+        backend = "x86"
         # backend = "fbgemm"
         self.plain_model.qconfig = torch.quantization.get_default_qconfig(backend)
         torch.backends.quantized.engine = backend
@@ -184,7 +184,9 @@ class Trainer:
         self.plain_model = torch.quantization.prepare(self.plain_model, inplace=False)
 
         # model_static_quantized = torch.quantization.convert(model_static_quantized, inplace=False)
-        self.plain_model = torch.quantization.convert(self.plain_model, inplace=False)
+        net_prepared = self.plain_model.to('cpu')
+        net_prepared.eval()
+        self.plain_model = torch.quantization.convert(net_prepared, inplace=False)
 
         # print_model_size(model_static_quantized)
         print_model_size(self.plain_model)

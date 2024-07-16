@@ -6,3 +6,4 @@ utilities/losses_marigold.py
 utilities/metrics_marigold.py
 torch_vs_onnx.py
 tensorrt_sample_usage.py
+/compare_64_vs_256.py

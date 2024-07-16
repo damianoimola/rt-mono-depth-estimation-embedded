@@ -73,13 +73,14 @@ def start_capture(trainer, height, width):
 
 if __name__ == "__main__":
     trainer = Trainer(opts)
-    trainer.load(model)
+    # trainer.load(model)
 
-    trainer.save_as_onnx(opts.height, opts.width)
-    trainer.load_from_onnx_optimized()
+    # trainer.save_as_onnx(opts.height, opts.width)
+    # trainer.load_from_onnx_optimized()
 
-    start_capture(trainer, opts.height, opts.width)
+    # start_capture(trainer, opts.height, opts.width)
 
+    trainer.quant()
 
 
 
