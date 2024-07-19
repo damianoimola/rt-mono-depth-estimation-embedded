@@ -22,23 +22,53 @@ The novel model called MonoDeRT (that stands for: Monocular Depth Estimation Rea
 
 ![MonoDeRT architecture](https://raw.githubusercontent.com/damianoimola/rt-mono-depth-estimation-embedded/master/images/monodert_white_bg.jpg)
 
+**keypoints** of MonoDeRT:
+- each convolutional layer won't touch in any way the height and width of the input image, it will change only the number of channels
+- to save parameters, upsampling and downsampling it's getting performed using bicubic interpolation
+- to save FPS during inference and maintaining an high level of customization of the weights update pipeline during training, the first and the second decoder blocks produces output only during training.
+
+## Down-/Up-sampling with Bicubic interpolation
+I've used for both up- and down-sampling the bicubic interpolation so to be compact. In downsampling using bicubic/bilinear/nearest interpolation changes on the so called: "subpixel accuracy", but since we are in the pixel domain, this won't affect the training.
+
+![Bicubic interpolation](https://raw.githubusercontent.com/damianoimola/rt-mono-depth-estimation-embedded/master/images/downsampling.png)
+
+Moreover, I could use a gaussian blurr before the interpolation technique, so to reduce the aliasing effect; but since:
+- we need real-time performances, so to enhance rapid processing I am tolerating lower quality
+- the high-frequency contents are not really frequent for the NYUv2 dataset
+- we have convolutional layers that can learn to enhance some pattern of the image, so the absence of a low-pass filter before the image won't affect too much the learning proess
+
+hence, I've decided to avoid using gaussian blurr before downsampling using bicubic interpolation.
+
+# Results
+## Batch predictions in training mode
+In order to show you how the model behave in training mode, follows a batch of predictions made during training (so against train dataset):
+
+![Training predictions](https://raw.githubusercontent.com/damianoimola/rt-mono-depth-estimation-embedded/master/images/training_60e_pred.png)
+
+
+## Batch predictions in evaluation mode
+While, as we said, in evaluation mode we have only the last decoder that outputs predictions; follows some results 
+
+![Training predictions](https://raw.githubusercontent.com/damianoimola/rt-mono-depth-estimation-embedded/master/images/eval_60e_pred.png)
 
 # How to run the code
 
 ## Model checkpoints
-Every checkpoint is available in google drive at [this link](https://drive.google.com/drive/folders/1UmDH74_rk2Ef_6gE0_a_EHWhDzD02WN9?usp=sharing).
+Every checkpoint is available in google drive at [this link](https://drive.google.com/drive/folders/1UmDH74_rk2Ef_6gE0_a_EHWhDzD02WN9?usp=sharing). If you need to download one of them, place it in a folder named `checkpoints` in the root, so you can easily use it without changing the code.
 
 ## Instructions
-1) First of all, you need to convert the torch model to a ONNX model using the following command
+1) [OPTIONAL STEP] First of all, you need to convert the torch model to a ONNX model using the following command
+
     ```bash
     python model_to_onnx.py [--ckpt <checkpoint_name>]
     ```
-    the checkpoint name, is the one without the extension `.ckpt`. If do not specify anything, the default loaded checkpoint is the last one: `mde60_kaggle.ckpt`.\
-    After executing this command, you'll obtain in the root folder a file named `model.onnx`, this will be the model used to make inference.
+    `--ckpt` is an **optional** parameter; the checkpoint name, is the one without the extension `.ckpt`. If do not specify anything, the default loaded checkpoint is the last one: `mde60_kaggle.ckpt` (i.e., the last one).\
+    After executing this command, you'll obtain in the root folder a file named `model.onnx`, this will be the model used to make inference. Please be sure that you have downloaded the right checkpoint and placed it in the `checkpoints` folder.
 
 > NOTE: A file `model.onnx` is already available in the root, so if you do not need to load a specific checkpoint, you can skip the first step. 
 
 2) Execute the script that tests the model with the currently mounted camera, you need to use the following command
+
     ```bash
     python cam_online_or_mean_onnx.py [--online <True/False> --fps_verbose <True/False>]
     ```
