@@ -144,6 +144,8 @@ if __name__ == "__main__":
 
     print("##### ONNX loaded")
 
+    print("##### Starting camera")
+    print("##### Press 'q' to EXIT and SAVE video")
     if opts.online:
         start_capture_online_fps(ort_session, opts.height, opts.width, opts.fps_verbose)
     else:
